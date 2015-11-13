@@ -1,3 +1,3 @@
-# My Data repository
+# My Data Science portfolio
 
-This repository contains Data Science examples and exercises
+This repository contains some Data Science examples and projects
