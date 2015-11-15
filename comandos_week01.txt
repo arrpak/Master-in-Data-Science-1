@@ -1,0 +1,440 @@
+ls
+cat .history
+ls -f
+;
+ls -l
+cd Data
+ls -l
+ls
+cd opentraveldata
+ls -l
+awk --help
+su --help
+cd R
+cd ..
+ll
+cdR
+cd Repositories
+zsh
+ls -l
+cd data-science-toolbox
+whereis
+ls -l
+ls
+git add mitexto.txt
+git commit
+ls -l
+kwrite mitext.txt
+kwrite mitexto.txt
+git status
+git staus
+git status
+git add mitexto.txt
+git status
+git commit
+kwrite mitexto.txt
+git diff
+git add mitexto.txt
+git diff
+git status
+git diff --cached
+git commit
+git diff --cached
+kwrite mitexto.txt
+kwrite mitexto.txt &
+ps -ef
+ps -ef | grep kwrite
+git status
+git diff
+git checkout -- mitexto.txt
+git ststus
+git status
+git  reset HEAD mitexto.txt
+git ststus
+git status
+git commit
+git add mit
+ls -f
+git add mitexto.txt
+git commit
+git log
+sudo dnf install qgit
+qgit
+git log
+git reset --hard 03c7bf40cba105ac4305cbae94d3131b211563bf
+qgit
+cd ..
+git clone https://github.com/xalmond/Master-in-Data-Science.git
+ls 
+cd Master-in-Data-Science
+ls 
+cd 
+cd Repositories/Master-in-Data-Science
+cd
+cd Repositories/Master-in-Data-Science
+kwrite READM.md &
+git status
+ls -f
+delete
+del 
+rm
+rm --help
+rm READM.md
+ls -l
+kwrite README.md
+gir add README.md
+git add README.md
+git commit
+git config --global -- edit
+git config --global --edit
+git commit --amend --reset-author
+ls
+git log
+git remote add origin https://github.com/xalmond/Master-in-Data-Science.git
+git push
+ls -l
+more README.md
+git config --global --edit
+git commit --amend --reset-author
+it\
+git config --global --edit
+git commit
+git add README.md
+ls -l
+git add READ
+git commit
+git push
+git pull
+more README.md
+ls .git
+more README.md
+ls
+cd Repositories
+cd Master-in-Data-Science
+git config --global credential.helper store
+ll -gitconfig
+ll .gitconfig
+ll .*
+cd ..
+ll .gitconfig
+ll
+cd Data
+cd ..
+ll Data
+cat Data/README.md
+less Data/README.md
+clear
+ll Data/opentraveldata
+cat Data/opentraveldata/optd_aircraft.csv
+less Data/opentraveldata/optd_aircraft.csv
+cd Dta
+cd Data
+mkdir --help
+man mkdir
+mkdir tmp
+ll
+cp -r opentraveldata tmp
+ll tmp
+cd tmp/opentraveldata
+less optd_aircraft.csv
+wc --help
+wc -l optd_aircraft.csv
+pwd
+gzip --help
+gzip -9 optd_por_public.csv
+ll
+gunzip optd_por_public.csv.gz
+ll
+gzip -9 optd_por_public.csv
+zless optd_por_public.csv.gz
+zcat optd_por_public.csv.gz | wc -l
+gunzip optd_por_public.csv.gz
+wc -- optd_por_public.csv
+wc -l optd_por_public.csv
+wc optd_por_public.csv
+ll
+bzip2 --help
+bzip2 -9 optd_por_public.csv
+bunzip2 optd_por_public.csv.bz2
+ll
+ll .zsh
+ll
+ll .*
+bzip2 -9 optd_por_public.csv
+bzless optd_
+bzcat optd_por_public.csv.bz2| wc -l
+bzcat optd_por_public.csv.bz2| grep Algeciras
+clear
+bzgrep Algeciras optd_por_public.csv.bz2
+ bzgrep Algeciras optd_por_public.csv.bz2 | wc -l
+bzcat optd_por_public.csv.bz2| grep Algeciras
+bzcat optd_por_public.csv.bz2| grep Algeciras | wc -l
+bzless optd_por_public.csv.bz2
+bzless -S optd_por_public.csv.bz2
+bzcat optd_por_public.csv.bz2| bzless -S
+bzcat optd_por_public.csv.bz2 | less -S
+bzacat optd_por_public.csv.bz2 | grep 
+bzcat optd_por_public.csv.bz2| grep "^MAD"
+bzcat optd_por_public.csv.bz2| grep "^MAD" | wc -l
+bzcat optd_por_public.csv.bz2| grep "^Spain&" | wc -l
+bzcat optd_por_public.csv.bz2| grep "^Spain$" | wc -l
+bzcat optd_por_public.csv.bz2| grep "Spain$" | wc -l
+bzcat optd_por_public.csv.bz2| grep "Spain$" | head
+bzcat optd_por_public.csv.bz2| grep "Spain$" | head | wc -l
+bzcat optd_por_public.csv.bz2| grep "Spain$" | head -100 | wc -l
+bzcat optd_por_public.csv.bz2| grep "Spain$" | tail  -100 | wc -l
+bzcat optd_por_public.csv.bz2| tail -5
+bzcat optd_por_public.csv.bz2| tail -n 7
+bzcat optd_por_public.csv.bz2| tail | tail +1
+tail --help
+sudo pip install --upgrade csvkit
+clear
+in2csv --help
+clear
+csvlook optd_aircraft.csv
+csvlook -d '^' optd_aircraft.csv
+csvlook optd_aircraft.csv | head | less -S
+csvlook -d '^' optd_aircraft.csv | head | less -S
+csvlook -d '^' optd_aircraft.csv | head 
+csvlook -d '^' optd_aircraft.csv | head | less -S
+csv stat -d '^' optd_aircraft.csv | head
+csvstat -d '^' optd_aircraft.csv | head
+csvstat -d '^' optd_aircraft.csv
+csvstat -d '^' optd_aircraft.csv | less
+csvcut -d '^' -c manufacturer optd_
+csvcut -d '^' -c manufacturer optd_aircraft.csv
+csvcut -d '^' -c manufacturer optd_aircraft.csv | uniq | wc -l
+csvcut -d '^' -c manufacturer optd_aircraft.csv | sort | uniq | wc -l
+csvcut -d '^' -c manufacturer optd_aircraft.csv | sort | uniq | head
+csvcut -d '^' -c manufacturer optd_aircraft.csv | sort | uniq | head -5 | tail -n +2
+csvcut -d '^' -c manufacturer optd_aircraft.csv | sort | uniq | head -5 | tail -n 2
+csvcut -d '^' -c manufacturer optd_aircraft.csv | sort | uniq | head -5 | tail -2
+csvcut -d '^' -c manufacturer optd_aircraft.csv | sort | uniq | tail -n +2 | wc -l
+clear
+csvcut -d '^' -c manufacturer optd_aircraft.csv | tail -n +2 > m.csv
+ll
+more m.csv
+    q
+cat m.csv | sort | less
+cat m.csv | sort | uniq -c
+cat m.csv | sort | uniq -c | sort
+cat m.csv | sort | uniq -c | sort -n
+sort --help
+cat m.csv | sort | uniq -c | sort -n | tail -5
+cat m.csv | sort | uniq -c | sort -r | head -5
+cat m.csv | sort | uniq -c | sort -n -r | head -5
+cat m.csv | sort | uniq -c | sort -n -r | head -10
+cvgrep -d '^' -c manufacturer -m Airbus optd_air
+cvgrep -d '^' -c manufacturer -m Airbus optd_aircraft.csv
+csvgrep -d '^' -c manufacturer -m Airbus optd_aircraft.csv
+csvgrep -d '^' -c manufacturer -m Airbus optd_aircraft.csv | wc -l
+csvgrep -d '^' -c manufacturer -m Airbus optd_aircraft.csv | wc -l | csvlook
+csvgrep -d '^' -c manufacturer -m Airbus optd_aircraft.csv | csvlook
+csvgrep -d '^' -c manufacturer -m Airbus optd_aircraft.csv | csvlook | less -S
+csvgrep -d '^' -c manufacturer -m Airbus optd_aircraft.csv | less -S
+csvgrep -d '^' -c manufacturer -m Airbus optd_aircraft.csv | csvlook | less -S
+cd Re
+ls
+cd Repositories
+ll
+cd ../Data
+ll
+cd tmp
+cd
+ll .h*
+mkdir miscosas
+cp .history miscosas/comandos_2015114.txt
+cd miscosas
+ls
+less comandos_2015114.txt
+cd ..
+cd Data/tmp
+ls -l
+man | grep rename 
+man man
+man man | grep rename
+ls 
+cd opentraveldata
+ll
+ll ..
+ls -l
+kwrite hola.sh
+ll
+chmod -help
+chmod --help
+chmod a+x hola.sh
+ll
+ls 
+ls -l
+ls -s
+l
+ll
+./hola.sh
+clear
+./hola.sh
+csvlook optd_aircraft.csv| head
+csvsort --help
+csvsort -d '^` -c nb_engines
+ls
+csvlook optd_aircraft.csv| head
+csvsort -d '^' -c nb_engines
+csvsort -d '^' -c nb_engines optd_aircraft.csv
+csvsort -d '^' -c nb_engines optd_aircraft.csv | head
+csvsort -n -r -d '^' -c nb_engines optd_aircraft.csv | head
+csvsort -help
+csvsort  -r -d '^' -c nb_engines optd_aircraft.csv | head
+csvsort  -r -d '^' -c nb_engines optd_aircraft.csv | head -1
+csvsort  -r -d '^' -c nb_engines optd_aircraft.csv | head -2 | tail -1
+csvsort  -r -d '^' -c nb_engines optd_aircraft.csv | head -2 | tail -1 | csvcut -c model
+csvsort  -r -d '^' -c nb_engines optd_aircraft.csv | head -2 | csvcut -c model
+csvsort  -r -d '^' -c nb_engines optd_aircraft.csv | head -2 | csvcut -c model | tail -1
+ls
+cd miscosas
+ll
+cd ..
+ll
+cp hola.sh modeloconmasmotores.sh
+krwrite modeloconmasmotores.sh
+kwrite modeloconmasmotores.sh
+chmod a+x modeloconmasmotores.sh
+ll
+./modeloconmasmotores.sh
+git add mode
+./modeloconmasmotores.sh
+cd ..
+ll
+cd Repositories
+ll
+cd Master-in-Data-Science
+ls -l
+ll ../../
+ll ../../Data/tmp
+ll ../../Data/tmp/opentraveldata
+cp ../../Data/tmp/opentraveldata ./
+cp ../../Data/tmp/opentraveldata/modeloconmasmotores.sh .
+ll
+./modeloconmasmotores.sh
+more modeloconmasmotores.sh
+kwrite modeloconmasmotores.sh
+more ./modeloconmasmotores.sh
+cd Data/tmp
+ls -l
+cd opentraveldata
+ls -l
+./modeloconmasmotores.sh
+[3~ ./modeloconmasmotores.sh
+rm -h
+rm --help
+ll
+rm modeloconmasmotores.sh
+cp ../../Data/tmp/opentraveldata/modeloconmasmotores.sh .
+ll 
+git add modeloconmasmotores.sh
+git commit 
+git commit
+git diff
+git diff --cached
+qgit
+git push
+cp ~/Data/tmp/opentraveldata/optd_aircraft.csv .
+ll
+git add optd_aircraft.csv
+git commit
+git push
+ll -d
+ll -help
+ll --help
+ll -R
+ll -R ~
+pwd
+kwrite modeloconmasmotores.sh
+ls -l
+chmod a+x modeloconmasmotoresargumentofichero.sh
+./modeloconmasmotoresargumentofichero.sh optd_aircraft.csv
+cp ~/Data/tmp/opentraveldata/modeloconmasmotoresargumentofichero.sh .
+git add modeloconmasmotoresargumentofichero.sh
+git commit
+git push
+pwd
+csvlook optd_aircraft.csv
+csvlook optd_aircraft.csv | head
+cvsgrep -d '^' -c nb_engines -m 4 optd_aircraft.csv
+csvgrep -d '^' -c nb_engines -m 4 optd_aircraft.csv
+csvgrep -d '^' -c nb_engines -m 4 optd_aircraft.csv | head
+csvgrep -d '^' -c nb_engines -m 4 optd_aircraft.csv | wc -l
+csvgrep -H -d '^' -c nb_engines -m 4 optd_aircraft.csv | wc -l
+csvgrep -d '^' -c nb_engines -m 4 optd_aircraft.csv | tail -n +1
+csvgrep -d '^' -c nb_engines -m 4 optd_aircraft.csv | tail -n +1 | wc -l
+csvgrep -H -d '^' -c nb_engines -m 4 optd_aircraft.csv | wc -l
+csvgrep -d '^' -c nb_engines -m 4 optd_aircraft.csv | wc -l
+csvgrep -d '^' -c nb_engines -m 4 optd_aircraft.csv | tail -n +1 | head
+csvgrep -d '^' -c nb_engines -m 4 optd_aircraft.csv | tail -n +2 | head
+csvgrep -d '^' -c nb_engines -m 4 optd_aircraft.csv | tail -n +2 | wc -l
+csvgrep -d '^' -c nb_engines -m 6 optd_aircraft.csv | tail -n +2 | wc -l
+csvgrep -d '^' -c nb_engines -m 2 optd_aircraft.csv | tail -n +2 | wc -l
+ll
+cp modeloconmasmotoresargumentofichero.sh avionesconnumeromotoresargument.sh
+kwrite avionesconnumeromotoresargument.sh
+./avionesconnumeromotoresargument.sh optd_
+./avionesconnumeromotoresargument.sh optd_aircraft.csv 4
+./avionesconnumeromotoresargument.sh optd_aircraft.csv 6
+./avionesconnumeromotoresargument.sh optd_aircraft.csv 2
+cp ~/Data/tmp/opentraveldata/avionesconnumeromotoresargument.sh .
+ll
+./avionesconnumeromotoresargument.sh optd_aircraft.csv 6
+git add avionesconnumeromotoresargument.sh
+git commit
+git push
+exit
+cd Data/
+ll
+cd tmp
+ll
+cd ..
+cd
+grep cp .history
+cd
+more .history
+ll
+cd Repositories
+ll
+cd data-science-toolbox
+ll
+cd ..
+more ../.history
+ll
+cd Repositories
+ll
+cd data-science-toolbox
+ls -l
+cd manager
+ll
+cd ..
+ls
+cd ..
+ll
+ll -lr
+llc-r
+ll -r
+ls -r
+ cd Documents
+ll
+cd ..
+cd Repositories
+ll
+cd data-science-toolbox
+ll
+ll README.md
+more README.md
+cd ..
+cd
+ll
+cd Documents
+ll
+cd ../miscosas
+ll
+cd ..
+cd Repositories
+l
+cd Master-in-Data-Science
+cp ~/.history comandos_week01.txt
