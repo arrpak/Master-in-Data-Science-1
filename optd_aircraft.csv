@@ -9,7 +9,7 @@ iata_code^manufacturer^model^iata_group^iata_category^icao_code^nb_engines^aircr
 14Y^BAe^146 Freighter (-200QT & QC)^14F^4J^B462^4^J
 14Z^BAe^146 Freighter (-300QT & QC)^14F^4J^B463^4^J
 19D^Airbus^A319^^^^^
-310^Airbus^B310^^^^^
+310^Airbus^A310^^^^^
 312^Airbus^A310-200^310^2J^A310^2^J
 313^Airbus^A310-300^310^2J^A310^2^J
 318^Airbus^A318^32S^2J^A318^2^J
