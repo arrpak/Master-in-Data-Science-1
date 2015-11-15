@@ -1,3 +1,3 @@
-# My Data Science portfolio
+# My Master of Data Science Portfolio
 
-This repository contains some Data Science examples and projects
+This repository contains Master Data Science exercises and projects
