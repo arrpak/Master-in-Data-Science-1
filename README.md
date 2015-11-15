@@ -1,3 +1,3 @@
-# My Master of Data Science Portfolio
+# KSchool - Master of Data Science - Madrid, Nov. 2015
 
-This repository contains Master Data Science exercises and projects
+This repository contains exercises and projects
