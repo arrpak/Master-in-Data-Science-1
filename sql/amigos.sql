@@ -8,9 +8,4 @@ CREATE TABLE amigos
     email   VARCHAR
 );
 
-INSERT INTO amigos VALUES
-(
-    'Juan Arevalo',
-    35,
-    'jarevalo@gmail.com'
-);
+INSERT INTO amigos VALUES ('Juan Arevalo', 35, 'jarevalo@gmail.com');
