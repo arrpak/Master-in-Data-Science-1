@@ -1,4 +1,5 @@
--- Countries with 3 o more cities higher than its national elevation average
+
+-- Countries with 3 o more cities with elevation higher than its national elevation average
 
 SELECT t1.country_name,COUNT(t1.name) AS ncities FROM optd_por_public AS t1
 LEFT OUTER JOIN 
