@@ -1,0 +1,48 @@
+DROP TABLE IF EXISTS spainsales;
+
+CREATE TABLE spainsales (
+	 COUNTRY_CLUSTER  VARCHAR(8) NOT NULL, 
+	 COUNTRY  VARCHAR(8) NOT NULL, 
+	 bm  VARCHAR(10) NOT NULL, 
+	 RTM  VARCHAR(7) NOT NULL, 
+	 PH1_NAME  VARCHAR(24) NOT NULL, 
+	 PH2_NAME  VARCHAR(19) NOT NULL, 
+	 PH3_NAME  VARCHAR(40) NOT NULL, 
+	 PH4_NAME  VARCHAR(40) NOT NULL, 
+	 MTM  VARCHAR(8) NOT NULL, 
+	 ORDNO  BIGINT NOT NULL, 
+	 ORDPART  VARCHAR(10) NOT NULL, 
+	 TOPSELL_FLAG  VARCHAR(10), 
+	 Revenue_Local  FLOAT NOT NULL, 
+	 Plan_USD_Revenue  FLOAT NOT NULL, 
+	 net_usd_revenue  FLOAT NOT NULL, 
+	 Net_USD_Revenue  FLOAT NOT NULL, 
+	 STATUS  VARCHAR(6) NOT NULL, 
+	 SBO  VARCHAR(10), 
+	 CUSTPO  VARCHAR(20) NOT NULL, 
+	 CUSTNAME  VARCHAR(30) NOT NULL, 
+	 CUSTNO  VARCHAR(10) NOT NULL, 
+	 PRODUCT_GROUP  VARCHAR(5) NOT NULL, 
+	 MANAGER  VARCHAR(16), 
+	 f2f_name  VARCHAR(26), 
+	 END_CUSTOMER_NO  VARCHAR(10), 
+	 end_customer_name  VARCHAR(40) NOT NULL, 
+	 ORDER_WEEK  INTEGER NOT NULL
+);
+
+SELECT DISTINCT custname FROM spainsales;
+
+SELECT ROUND(SUM(net_usd_revenue)) FROM spainsales;
+SELECT ROUND(SUM(net_usd_revenue)) FROM spainsales WHERE BM='SMB';
+SELECT ROUND(SUM(net_usd_revenue)) FROM spainsales WHERE BM<>'SMB' AND custname LIKE 'INTER%';
+SELECT ROUND(SUM(net_usd_revenue)) FROM spainsales WHERE BM<>'SMB' AND custname NOT LIKE 'INTER%';
+
+SELECT DISTINCT f2f_name FROM spainsales;
+SELECT ROUND(SUM(net_usd_revenue)) FROM spainsales 
+WHERE BM<>'SMB' AND custname NOT LIKE 'INTER%'AND f2f_name LIKE 'Ivan%';
+
+SELECT end_customer_name,ROUND(SUM(net_usd_revenue)) AS totrev FROM spainsales
+WHERE bm='GA' OR bm='Enterprise'
+GROUP BY end_customer_name ORDER BY totrev DESC;
+
+
