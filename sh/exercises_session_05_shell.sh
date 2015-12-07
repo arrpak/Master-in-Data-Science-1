@@ -15,7 +15,7 @@ cut -d '^' -f 10 optd_airlines.csv | sort | uniq -c  | tail -n +2 | sort -rn | h
 
 cd ~/Data/us_dot/traffic
 zless T100_SEGMENT_ALL_CARRIER_2015.zip | head -1 | tr "," "\n" > /tmp/columns.csv
-numcolumn=$(cat /tmp/columns.csv | wc -l )
+numcolumn=$(cat /tmp/columns.csv | wc -l)
 seq $numcolumn > /tmp/numcolumns.csv
 paste /tmp/columns.csv /tmp/numcolumns.csv | grep "PASSENGERS"
 rm /tmp/columns.csv
