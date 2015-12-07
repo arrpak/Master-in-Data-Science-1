@@ -47,6 +47,7 @@ do
     echo $topairline $totpassengers
 done
 rm /tmp/passengers.csv
+rm /tmp/topten.csv
 
 # Extract 7x7 and 3xx patterns from model of file optd_aircraft.csv
 
