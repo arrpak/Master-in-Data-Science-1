@@ -27,3 +27,29 @@ my_airquality <- airquality[,1:4]
 plot(my_airquality)
 plot(my_airquality$Temp,my_airquality$Ozone)
 plot(my_airquality$Wind,my_airquality$Ozone)
+
+# Ejercicio: lee el fichero paro.csv usando la función read.table. Comprueba que
+#   está correctamente leído usando head, tail, nrow, summary, etc.
+
+?read.table
+paro_df <- read.table("/home/dsc/Repositories/Master-in-Data-Science/Data/R/paro.csv", header=TRUE)
+
+head(paro_df)
+tail(paro_df)
+nrow(paro_df)
+summary(paro_df)
+
+# Ejercicio: representa gráficamente la anchura del sépalo contra su longitud (en iris)
+# Ejercicio: usa main, xlab e ylab para añadir etiquetas (ver ?plot)
+
+?plot
+plot(iris$Sepal.Width,iris$Sepal.Length, main="Iris Sepal", xlab="sepal.width", ylab="sepal.length", col='blue')
+
+# Ejercicio: estudia la distribución de las temperaturas en Nueva York (durante los meses en cuestión)
+# Ejercicio: usa "col" para mejorar el aspecto del gráfico.
+# Ejercicio: usa abline para dibujar una línea vertical roja en la media de la distribución.
+
+head(airquality)
+hist(airquality$Temp,main="Histogram of NY Temps",xlab="Temp",
+                     border=NA, col='blue', density=50)
+abline(v=mean(airquality$Temp),col='red')

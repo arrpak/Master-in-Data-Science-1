@@ -180,7 +180,7 @@ plot(cars$speed, cars$dist)
 # Ejercicio: representa gráficamente la anchura del sépalo contra su longitud (en iris)
 # Ejercicio: usa main, xlab e ylab para añadir etiquetas (ver ?plot)
 
-plot(iris$Petal.Width,iris$Petal.Width)
+plot(iris$Petal.Width,iris$Petal.Length)
 
 
 # más:
