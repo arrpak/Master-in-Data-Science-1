@@ -20,6 +20,7 @@ dim(iris)
 nrow(iris)
 ncol(iris)
 
+# --------------------------
 # Selecting rows and columns
 # --------------------------
 
@@ -114,3 +115,9 @@ barplot(VADeaths[,2],main="Women deaths in Virginia\nby age",
 # Plotting histograms
 
 hist(iris$Sepal.Width)
+
+# Plotting boxplots
+
+boxplot(airquality$Temp ~ airquality$Month)
+?boxplot
+

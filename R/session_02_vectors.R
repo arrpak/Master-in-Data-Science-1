@@ -145,7 +145,7 @@ hist(rpois(1000, 5))
 # pois
 # r - muestrea al azar
 # d - mirar función de densidad (probabilidad)
-# p - función de distribucuón (suma de probabildad o integral hasta el punto) o probabilidad de sacar un valor menor que
+# p - función de distribucuón (suma de probabilidad o integral hasta el punto) o probabilidad de sacar un valor menor que
 # q - quantil (realmente es la inversa de la p)
 
 # Mirar diferencias entre normal y t (esta incluye muestras con catastrofes en bolsas)
@@ -351,7 +351,7 @@ mi.iris <- iris[1:10,]
 # Recordad:
 
 ls()
-rm(mi.iris)
+rm(iris_2)
 ls()
 
 # ¿de qué tipo son?
@@ -380,6 +380,7 @@ calculadora.hipotecas <- calcular.cuota.hipoteca
 calculadora.hipotecas(100000, 20, 3)
 ls()
 rm(calculadora.hipotecas)
+ls()
 
 # Ejercicio: crear una función que dado un número n calcule la suma de los n primeros términos de la serie de
 #   Leibniz para calcular pi
@@ -399,7 +400,7 @@ xln <- function(x){
 
 x <- 1:10000 / 10000
 plot(x, xln(x), type = "l", xlab = "", ylab = "", 
-     main = "Funciónn -x * log(x)")
+     main = "Función -x * log(x)")
 
 
 xln(0)       # Nan cuando queremos cero!

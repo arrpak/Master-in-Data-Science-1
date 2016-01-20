@@ -50,6 +50,26 @@ plot(iris$Sepal.Width,iris$Sepal.Length, main="Iris Sepal", xlab="sepal.width", 
 # Ejercicio: usa abline para dibujar una línea vertical roja en la media de la distribución.
 
 head(airquality)
-hist(airquality$Temp,main="Histogram of NY Temps",xlab="Temp",
-                     border=NA, col='blue', density=50)
+hist(airquality$Temp,main="Histogram of NY Temps",xlab="Temp", border=NA, col='blue', density=50)
 abline(v=mean(airquality$Temp),col='red')
+
+
+# Ejercicios
+#    Carga el fichero dat/Olive.txt y ferifica que está correctamente cargado
+#    Selecciona los registros de una región determinada
+#    Haz un boxplot de "eicosenoic" en función de la región
+#    Encuentra un "punto de corte"
+#    Selecciona solo los registros por debajo de ese punto de corte
+
+olive_df <- read.table("/home/dsc/Repositories/Master-in-Data-Science/Data/R/Olive.txt", header=TRUE)
+
+summary(olive_df)
+olive_df[olive_df$Region == "Sardinia",]
+
+boxplot(olive_df$eicosenoic ~ olive_df$Region, col='blue')
+abline(h=6, col='DarkBlue', lty=3, lwd=2)
+grid()
+
+set_df <- olive_df[olive_df$eicosenoic < 6, ]
+boxplot(set_df$eicosenoic ~ set_df$Region, col='blue', ylim=c(0.5,3.5))
+grid()
