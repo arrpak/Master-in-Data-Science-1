@@ -180,3 +180,13 @@ my_factorial <- function(n)
 }
 
 my_factorial(4)
+
+# apply functions
+
+cuadrado <- function(x) x^2
+sapply(1:10, cuadrado)
+lapply(1:10, cuadrado)
+replicate(2, cuadrado)
+
+replicate(10,mean(rnorm(1000,0,0.3)))
+          

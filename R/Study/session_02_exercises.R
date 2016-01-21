@@ -85,8 +85,6 @@ plot(r,xln(r),type='l',col='blue',lty=4)
 # Ejercicio: crea una función para simular cotizaciones bursátiles usando bucles for en lugar de la
 # función cumprod.
 
-plot(8.90*cumprod(exp(rnorm(200,0,0.01))), type='l') # sd=1% diary, first value=8.90€ (today TEF value)
-
 stock_prices_simulator <- function(stock_price)
 {
   tmp <- 1
@@ -107,7 +105,7 @@ plot(stock_prices(8.9),type='l')
 read_lines_dir <- function(v)
 {
   result <- 0
-  for (i in v) { result <- result + length(readLines(i,warn=FALSE)) }
+  for (i in v) result <- result + length(readLines(i,warn=FALSE))
   return(result)
 }
 
@@ -116,13 +114,7 @@ read_lines_dir(dir(".")) # lines = 21061
 # Ejercicio: usa nchar para contar el número de caracteres de esos ficheros.
 
 totalchar <- 0
-for (j in dir("."))
-{
-  for (i in readLines(j,warn=FALSE))
-  {
-    totalchar <- totalchar + nchar(i)
-  }
-}
+for (j in dir(".")) for (i in readLines(j,warn=FALSE)) totalchar <- totalchar + nchar(i)
 
 totalchar # characters = 2326698
 
@@ -130,4 +122,28 @@ totalchar # characters = 2326698
 # Pistas: crea una función que dependa de 3 parámetros: número de días y los parámetros de la normal;
 #   luego usa replicate para generar un vector de precios finales
 
-# Un ejemplo (asegúrate de que tu directorio de trabajo es "data")
+# Ejercicio: ¿qué hace el código siguiente?
+
+ficheros <- dir()
+ficheros
+
+foo <- function(fichero)
+{
+  tmp <- readLines(fichero)
+  length(tmp)
+}
+
+sapply(ficheros, foo)   ### Answer: it counts and print number of line of each file in working directory
+
+# Ejercicio: haz lo mismo calculando (usa la función nchar) el número de caracteres de cada fichero.
+
+my_files <- dir(".")
+
+fnchar <- function(f)
+{
+  result <- 0
+  for (i in readLines(f)) result <- result + nchar(i)
+  return(result)
+}
+
+sapply(my_files, fnchar)
