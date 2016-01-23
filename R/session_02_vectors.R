@@ -371,7 +371,7 @@ typeof(x)
 calcular.cuota.hipoteca <- function(capital, anyos, interes){
   interes.mensual <- interes / 12 / 100 
   meses <- 1:(anyos*12)
-  return(capital / sum(1 / (1+interes.mensual)^meses))
+  return(capital / sum(1 / (1+interes.mensual)^meses))    # Si no pones return, se devuelve el último valor analizado
 }
 
 calcular.cuota.hipoteca(100000, 20, 3)
@@ -490,6 +490,9 @@ suma.x
 cuadrado <- function(x) x^2
 sapply(1:10, cuadrado)
 lapply(1:10, cuadrado)
+
+### MUY UTIL:
+sapply(1:10, function(x) x^2)
 
 lapply(iris, class)
 sapply(iris, length)

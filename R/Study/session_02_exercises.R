@@ -65,14 +65,15 @@ pi_cal(3000)
 
 xln <- function(x)
 {
+  if (x < 0 | x > 1)
+    stop("input value out of range")
   if (x == 0)
     return(0)
   else
-    if (x < 0 | x > 1)
-      stop("input value out of range")
-    else
-      return(-x*log(x))
+    return(-x*log(x))
 }
+
+xln()
 
 xln(c(0.1,0.2,0.3))
 xln(.5)
@@ -80,7 +81,7 @@ xln(2)
 xln(-3)
 
 r <- seq(0.1,0.9,by=0.01)
-plot(r,xln(r),type='l',col='blue',lty=4)
+plot(r,xln(r),type='l',col='blue',lty=4,lwd=2)
 
 # Ejercicio: crea una función para simular cotizaciones bursátiles usando bucles for en lugar de la
 # función cumprod.
@@ -102,6 +103,8 @@ plot(stock_prices(8.9),type='l')
 # Ejercicio: crea el vector de nombres de ficheros de data usando dir; luego, aplícale una función
 #   que lea las líneas (readLines) y las cuente.
 
+# Total lines of directory
+
 read_lines_dir <- function(v)
 {
   result <- 0
@@ -110,6 +113,10 @@ read_lines_dir <- function(v)
 }
 
 read_lines_dir(dir(".")) # lines = 21061
+
+# Total lines by file
+
+cbind(sapply(dir(), function(f) length(readLines(f,warn=FALSE))))
 
 # Ejercicio: usa nchar para contar el número de caracteres de esos ficheros.
 
@@ -120,7 +127,13 @@ totalchar # characters = 2326698
 
 # Ejercicio: usa replicate para obtener la distribución de los posibles valores de una acción al cabo de un año
 # Pistas: crea una función que dependa de 3 parámetros: número de días y los parámetros de la normal;
-#   luego usa replicate para generar un vector de precios finales
+#   luego usa replicate para generar un vector de precios finales al cabo de ese número de dias.
+
+final_price <- function(ndays, n1, n2) prod(exp(rnorm(ndays,n1,n2)))
+lf <- 9.8 * replicate(1000,final_price(200,0,0.01)) # 9.80 actual price TEF stock
+
+hist(lf, col='blue', density=20)
+abline(v=mean(lf), col='red', lwd=2)
 
 # Ejercicio: ¿qué hace el código siguiente?
 

@@ -10,9 +10,10 @@
 # ggplot2
 #----------------------------------------------------------------------------
 
+install.packages("ggplot2")
 library(ggplot2)
 
-paro <- read.table("data/paro.csv", header = T, sep = "\t")
+paro <- read.table("paro.csv", header = T, sep = "\t")
 
 # vamos a arreglar un poco los datos (los detalles, más adelante)
 paro$Periodo <- gsub("QIV",  "-12-31", paro$Periodo)
@@ -36,13 +37,13 @@ paro <- dcast(paro, Gender + Provinces + Periodo ~ Situation)
 paro <- transform(paro, tasa.paro = 100 * unemployed / active)
 
 ggplot(paro, aes(x = Periodo, y = tasa.paro, col = Gender)) +
-  geom_point() + geom_smooth() + facet_wrap(~ Provinces)
+  geom_point() + geom_smooth() + facet_wrap(~ Provinces)             # Se van añadiendo capas (geom) y formas (facet)
 
 # Otra manera de representar las facetas
 
 tmp <- paro[paro$Provinces %in% c("50 Zaragoza", "22 Huesca", "44 Teruel"),]
 ggplot(tmp, aes(x = Periodo, y = tasa.paro)) +
-  geom_point() + geom_smooth() + facet_grid(Provinces~Gender)
+  geom_point() + geom_smooth() + facet_grid(Provinces~Gender) # Mínimo una capa (no es estrictamente necesario facet)
 
 # Estéticas: cosas que se pueden pintar:
 #   x e y
@@ -58,12 +59,37 @@ ggplot(tmp, aes(x = Periodo, y = tasa.paro)) +
 # Pista: usa http://docs.ggplot2.org/current/ como fuente de documentación para tus gráficos
 
 # Ejercicio: haz un diagrama de cajas de las temperaturas en NY por mes (sin facetas)
+
+ggplot(airquality, aes(x=factor(Month),y=Temp)) +  geom_boxplot() # IMP!!!! boxplot necesita Month categórica y no numerica
+                                                                  # Mirar caso anterior periodo paro que sería contínua y no categorico
+
+# Puedo con mas capas
+
+ggplot(airquality, aes(x=factor(Month),y=Temp)) +  geom_boxplot() + geom_jitter(alpha=0.3) 
+
 # Ejercicio: haz un histograma de las temperaturas en NY por mes (con facetas)
+
+ggplot(airquality, aes(Temp)) + geom_histogram(col='blue') + facet_wrap(~ Month) 
+ggplot(airquality, aes(Temp)) + geom_histogram(fill='blue') + facet_grid(Month~ .) # En horizontal puedo comparar Temp por mes
+
 # Ejercicio: prueba con los gráficos de violín (que son una mezcla de los dos anteriores)
+
+ggplot(airquality, aes(x=factor(Month),y=Temp)) + geom_violin(fill='blue',alpha=.3)
+  
 # Ejercicio: superpón las distribuciones de las temperaturas de NY por mes como en 
 #   http://www.datanalytics.com/2015/07/09/son-normales-las-alturas-de-los-individuos/
 
+ggplot(airquality, aes(x=Temp, fill=factor(Month))) + geom_density(alpha=0.5)
+
 # Ejercicio: haz gráficos con tus propios datos. Tienes un rato para ello.
+
+
+gasdf <- read.csv("carburantes_20050222.csv", sep="\t", header=TRUE, dec=",")
+
+gasdf <- gasdf[gasdf$Precio.Gasoleo.A >1,]
+colnames(gasdf)
+
+ggplot (gasdf, aes(x=Longitud..WGS84., y=Latitud..WGS84.)) + geom_point(aes(colour = Precio.Gasoleo.A))+ scale_colour_gradient(low = "blue")
 
 
 #----------------------------------------------------------------------------
@@ -94,6 +120,7 @@ merge(clientes, ventas.2, all.x = T)
 # web scraping (y más)
 #----------------------------------------------------------------------------
 
+install.packages("rvest")
 library(rvest)
 
 # vamos a descargar las cotizaciones del IBEX 35 en tiempo "real"
@@ -102,7 +129,16 @@ url.ibex <- "http://www.bolsamadrid.es/esp/aspx/Mercados/Precios.aspx?indice=ESI
 tmp <- read_html(url.ibex)
 tmp <- html_nodes(tmp, "table")    
 
+class(tmp)
 length(tmp)
+# Es una lista de nodos
+sapply(tmp, class)
+
+# Convertimos nodos en dataframes
+
+sapply(tmp,html_table,fill=TRUE) # La tabla 5 es la que quiero con las cotizacionoes
+
+ibex <- html_table(tmp[[5]])
 
 
 # Ejercicio: examinar los objetos anteriores
@@ -120,6 +156,25 @@ length(tmp)
 #     2.- usa gsub para cambiar "," por "." en las columnas de interés
 #     3.- usa as.numeric para cambiar texto por números
 #     4.- ¿te atreves a usar as.Date para cambiar texto por fechas?
+
+# Primer arreglo nom bres columnas (no acentos,signos,blancos)
+
+colnames(ibex) <- c("Nombre","Ultimo","Diferencia","Maximo","Minimo","Volumen","Efectivo","Fecha","Hora")
+
+head(ibex)
+
+clean_num <- function(x)
+{
+  tmp <- gsub("\\.","",x)
+  tmp <- gsub(",",".",tmp)
+  as.numeric(tmp)
+}
+
+for (i in 2:7) ibex[,i] <- clean_num(ibex[,i])
+ibex$Fecha <- as.Date(ibex$Fecha,"%d/%m/%Y")
+
+for (i in 1:ncol(ibex)) print(class(ibex[,i]))
+
 
 # la otra "gran" función para manejar texto: paste
 

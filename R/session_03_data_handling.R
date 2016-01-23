@@ -24,7 +24,7 @@ library(plyr)
 # formato largo (melted)
 #----------------------------------------------------------------------------
 
-pob.aragon.2014 <- read.table("data/pob_aragon_2014.csv", header = T, sep = "\t")
+pob.aragon.2014 <- read.table("pob_aragon_2014.csv", header = T, sep = "\t")
 pob.aragon.2014
 
 melt(pob.aragon.2014)          # mismos datos en otro formato... ¡formato largo!
@@ -33,13 +33,15 @@ melt(pob.aragon.2014)          # mismos datos en otro formato... ¡formato largo
 #   - cómo se ha transformado pob.aragon.2014
 #   - que la información contenida en ambos conjuntos de datos es la misma
 
-pob.aragon <- read.table("data/pob_aragon.csv", header = T, sep = "\t")
+pob.aragon <- read.table("pob_aragon.csv", header = T, sep = "\t")
 pob.aragon
 
 melt(pob.aragon)               # ¡horrible!
 melt(pob.aragon, id.vars = c("Provincia", "Periodo"))   # Ahora sí
 
 # Ejercicio: ¿qué pasa si alteras el orden de provincia y periodo?
+
+melt(pob.aragon, id.vars = c("Periodo","Provincia"))   # Ahora sí
 
 pob.aragon.long <- melt(pob.aragon, id.vars = c("Provincia", "Periodo")) 
 
@@ -52,7 +54,13 @@ arrange(pob.aragon.long, Periodo, Provincia)     # ¿te gusta más ordenar así?
 
 # Ejercicio: toma el conjunto de datos airquality y disponlo en formato largo
 
+summary(airquality)
+melt(airquality, id.vars=c("Month","Day"))
+  
 # Ejercicio: calcula el valor mediano (median) de las variables de long.airquality
+
+df <- melt(airquality, id.vars=c("Month","Day"))
+cbind(tapply(df$value, df$variable, mean, na.rm = TRUE))
 
 #----------------------------------------------------------------------------
 # Formato ancho (cast)
@@ -63,27 +71,27 @@ pob.aragon.2014.largo
 
 # a partir del formato largo se puede pasar a distintos tipos de formatos anchos:
 
-dcast(pob.aragon.2014.largo, Provincia ~ variable)
-dcast(pob.aragon.2014.largo, variable ~ Provincia)
+dcast(pob.aragon.2014.largo, Provincia ~ variable) # provincia en columnsa - variable en columnas
+dcast(pob.aragon.2014.largo, variable ~ Provincia) # al revés
 
 # Agregaciones
 
 iris.long <- melt(iris)
 head(iris.long)
 
-dcast(iris.long, Species ~ variable)    
+dcast(iris.long, Species ~ variable) # 50 quiere decir que hay un vector de 50 valores
 
 # Ejercicio: ¿qué ha pasado?
 
 dcast(iris.long, Species ~ variable, fun.aggregate = mean) 
 
-dcast(iris.long, Species ~ variable, value.var = "value", fun.aggregate = mean)  
+dcast(iris.long, Species ~ variable, value.var = "value", fun.aggregate = mean)  # en el anterior comando ha adivinado el valor
 
 # Nota: generalmente, no hay que especificar "value.var": dcast la adivina. Pero a veces se
 #   equivoca, por lo que...
 
 
-paro <- read.table("data/paro.csv", header = T, sep = "\t")
+paro <- read.table("paro.csv", header = T, sep = "\t")
 
 # vamos a arreglar un poco los datos (los detalles, más adelante)
 paro$Periodo <- gsub("IV",  "4", paro$Periodo)
@@ -102,16 +110,29 @@ paro$Situation[paro$Situation == "Parados que buscan primer empleo"]    <- "neve
 paro$Situation <- factor(paro$Situation)
 
 # paro está en formato largo, pero...
+
 paro.alt <- dcast(paro, Gender + Provinces + Periodo ~ Situation)
 
 # Ejercicio: añade a paro.alt una columna adicional con la tasa de paro (desempleados entre
 #   población activa)
+
+head(paro.alt)
+# paro.alt$unemp_rate <- NULL
+paro.alt$unemployed_rate <- round(paro.alt$unemployed / paro.alt$active,2) # mucho más fácil que sin dcast
+head(paro.alt)
+sum(paro.alt$unemployed) / sum(paro.alt$active)
 
 # Nota: este ejercicio demuestra que en ocasiones es bueno crear un determinado tipo de formato
 #   largo para crear nuevas variables fácilmente.
 
 # Ejercicio: agrega los datos del paro para toda España usando dcast y fun.aggregate = sum.
 #   Pista: si ignoras la provincia en dcast se producen "duplicados"
+
+head(paro.alt)
+paro.alt <- dcast(paro, Periodo ~ Situation, fun.aggregate = sum, na.rm=TRUE) # Evolución en el tiempo
+paro.alt$unemployed_rate <- paro.alt$unemployed / paro.alt$active*100
+
+plot(paro.alt$unemployed_rate,type='l')
 
 # Ejercicio: identifica las provincias y periodos en los que la tasa de paro masculina es
 #   mayor que la femenina (nota: la tasa de paro es "unemployed" dividido por "active")
@@ -121,9 +142,12 @@ paro.alt <- dcast(paro, Gender + Provinces + Periodo ~ Situation)
 # plyr: procesamiento de tablas por trozos
 #----------------------------------------------------------------------------
 
-# la expresión fundamental:
+# la expresión fundamental: (pensado para formato largo)
 
+head(paro)
 res <- ddply(paro, .(Gender, Periodo, Situation), summarize, total = sum(value))
+head(res)
+
 
 # elementos de la expresión anterior:
 # ddply: transforma una tabla en otra tabla
@@ -133,6 +157,31 @@ res <- ddply(paro, .(Gender, Periodo, Situation), summarize, total = sum(value))
 # total = ...: argumentos de la función
 
 # Ejercicio: pon airquality en formato largo y saca la media y la mediana de cada variable por mes
+
+# primero pongo en formato largo
+
+head(airquality)
+paro.long <- melt(airquality, id.vars=c("Month","Day"), na.rm = TRUE)
+
+head(paro.long)
+ddply(paro.long, .(variable), summarize, mean = mean(value))
+ddply(paro.long, .(variable), summarize, median = median(value))
+ddply(paro.long, .(variable), summarize, mean = mean(value), median = median(value))
+
+ddply(paro.long, .(Month,variable), summarize, mean = mean(value), median = median(value))
+
+# mirar ddply(paro.long, .(variable), function(x) summarize(x,median = median(value)))
+
+# Ejercicio: sacar media y mediana de la longitud del petalo por especie
+
+head(iris)
+ddply(iris, .(Species), summarize, mean = mean(Petal.Length), median = median(Petal.Length))
+
+geo_mean <- function(x) exp(mean(log(x)))
+
+# Ahora la media geometrica (exp(mean(log)))
+ddply(iris, .(Species), summarize, geo_mean(Petal.Length))
+
 
 # otras funciones que se pueden usar en ddply:
 foo <- function(x) lm(Temp ~ Solar.R, data = x)$coefficients
@@ -145,6 +194,7 @@ ddply(airquality, .(Month), foo)
 # variantes de la fórmula anterior: dlply
 res <- dlply(airquality, .(Month), function(x) lm(Temp ~ Solar.R, data = x))  # una lista!
 lapply(res, coefficients)
+ldply(res, coefficients)
 
 # existen también llply, laply, alply... e incluso d_ply
 
@@ -175,12 +225,15 @@ res <- tmp[tmp$rank == 1,]
 
 # Un ejemplo de regresiones por trozos y asignar el valor predicho.
 # Usamos data de http://www.unt.edu/rss/class/Jon/R_SC/Module9/lmm.data.txt
-dat <- read.table("data/lmm_data.txt", header = T, sep = ",")
+dat <- read.table("lmm_data.txt", header = T, sep = ",")
 
-dat.preds <- ddply(dat, .(school), transform, 
-                   pred = predict(lm(extro ~ open + agree + social + class)))
+dat.preds <- ddply(dat, .(school), transform,    
+                   pred = predict(lm(extro ~ open + agree + social + class))) # en este caso transform añade columna
 
+# Todos los modelos tiene un predict
 
+nrow(dat.preds)
+nrow(dat)
 # Alternativamente:
 
 foo <- function(x){
@@ -192,3 +245,13 @@ foo <- function(x){
 
 dat.preds <- ddply(dat, .(school), function(x) foo(x))
 dat.preds <- ddply(dat, .(school), foo)
+
+# Practicar con las gasolineras, precio por provincia, por distribuidor
+
+gasdf <- read.csv("carburantes_20050222.csv", sep="\t", header=TRUE, dec=",")
+head(gasdf)
+summary(gasdf)
+
+sddf <- ddply(gasdf, .(Provincia), summarize, sd = sd(Precio.Gasoleo.A, na.rm = TRUE))
+
+sddf[order(sddf$sd),]
