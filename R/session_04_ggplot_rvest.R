@@ -91,6 +91,27 @@ colnames(gasdf)
 
 ggplot (gasdf, aes(x=Longitud..WGS84., y=Latitud..WGS84.)) + geom_point(aes(colour = Precio.Gasoleo.A))+ scale_colour_gradient(low = "blue")
 
+install.packages("ggmap")
+library(ggmap)
+
+# ubico mi alma mater
+unizar <- geocode('Universidad de Zaragoza, Zaragoza, España')
+
+# obtengo un mapa
+map.unizar <- get_map( location = as.numeric(unizar),
+                       color = "color",
+                       maptype = "roadmap",
+                       scale = 2,
+                       zoom = 16)
+
+# lo represento
+ggmap(map.unizar) 
+
+# le añado puntos
+ggmap(map.unizar) + geom_point(aes(x = lon, y = lat),
+                               data = unizar, colour = 'red',
+                               size = 4)
+
 
 #----------------------------------------------------------------------------
 # merge
