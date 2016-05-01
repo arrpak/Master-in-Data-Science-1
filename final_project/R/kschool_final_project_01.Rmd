@@ -1,0 +1,84 @@
+---
+title: "010 - Loading Data - Kaggle - Santander Consumer - Customer Satisfaction"
+author: "datatuk"
+date: "12 de abril de 2016"
+output: html_document
+---
+
+### Loading Data
+
+* Loading train dataset
+* Delete all columns with 0 from dataframe
+    + Use the read.csv() function to read the data into R. Call the loaded data college. Make sure that you have the directory set to the correct location for the data.
+
+```{r}
+
+dfTrain <- read.csv('data/train.csv', header = TRUE, sep = ',', na.strings = c("","NA"))
+dim(dfTrain)
+
+dfTrain <- dfTrain[,colSums(dfTrain) != 0]
+dim(dfTrain)
+
+numval <- apply(dfTrain,2,function(x)length(unique(x)))
+t(numval[order(numval)])
+
+```
+
+### Option 1
+
+* Logistic Regression
+
+glm.fit <- glm(TARGET~saldo_medio_var5_ult1,data=dfTrain,family=binomial )
+
+summary(glm.fit)$coef
+
+glm.pred <- rep(0,nrow(dfTrain))
+glm.probs <- predict(glm.fit,type = "response")
+glm.pred[glm.probs < 0.04] <- 1
+
+table(glm.pred,dfTrain$TARGET)                          # Confusion matrix
+mean(glm.pred == dfTrain$TARGET)
+
+sum(glm.probs)
+sum(dfTrain$TARGET)
+dfTrain$saldo_medio_var5_ult3
+
+hist(glm.probs)
+
+
+
+
+name <- names(dfTrain)[2:336]
+type <- rep(0,335)
+i <- 0
+for (col in 2:336){
+    i <- i+1
+    type[col] <- typeof(dfTrain[col])
+}
+pvalue <- rep(0,335)
+dfPredictors <- data.frame(name,type,pvalue)
+
+i <- 0
+
+for (col in names(dfTrain)[2:336]){
+    i <- i+1
+    glm.fit <- glm(substitute(TARGET ~ i, list(i = as.name(col))), data = dfTrain)
+    dfPredictors[i,3] <- summary(glm.fit)$coef[2,4]
+}
+
+dfPredictors <- dfPredictors[order(dfPredictors$pvalue),]
+
+head(dfPredictors)
+
+str(dfTrain)
+
+i <- 0
+for (col in names(dfTrain)[2:50]){
+    i <- i+1
+    # glm.fit <- glm(substitute(TARGET ~ i, list(i = as.name(col))), data = dfTrain)
+    dfPvalues[i,2] <- length(unique(dfTrain[col])))
+    
+}
+
+unique(substitute(dfTrain$i, list(i = as.name("var38"))))
+typeof(dfTrain$var38)
