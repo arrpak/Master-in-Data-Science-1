@@ -1,0 +1,132 @@
+---
+title: "Sistemas de Recomendación"
+author: Jorge Ayuso Rejas
+date: Abril 2016
+output: 
+ html_document:
+   theme: cosmo
+   highlight: tango
+   css: ../img/base.css
+---
+
+
+
+## Ejercicios
+
+### **Ejercicio 1**
+
+Una vez construido con Spark el recomendador para las películas de Movielens, extraer
+para cada individuo sus mejores 10 recomendaciones.
+
+#### **Solución**:
+
+```{r,engine='python',eval=FALSE}
+# Pegar en el notebook de spark después de entrenar el modelo de recomendación
+
+productFeatures = finalModel.productFeatures().collect() 
+productArray=[]
+productFeaturesArray=[]
+
+for x in productFeatures:
+    productArray.append(x[0])
+    productFeaturesArray.append(x[1])
+    
+matrix = np.matrix(productFeaturesArray)
+productArrayBroadcast = sc.broadcast(productArray)
+productFeaturesArraybroadcast = sc.broadcast(matrix.T)    
+
+def top_items(users,k):
+    yhat = np.array(users[1] * productFeaturesArraybroadcast.value).squeeze()
+    quiero = np.argsort(-yhat)[:k]
+    ids = np.array(productArrayBroadcast.value)[quiero].tolist()
+    rnk = yhat[quiero].tolist()
+    
+    return([Row(id_user=users[0],
+               id_pelis=ids[i],
+               rating=rnk[i]) for i in range(k)])  
+
+predicciones = (
+  sqlContext
+  .createDataFrame(
+    finalModel.userFeatures().flatMap(lambda x: top_items(x,10))
+    )
+)
+predicciones.orderBy("id_user",desc("rating")).show()
+
+df = predicciones.toPandas()
+df.to_csv("../ejercicios/top10_recomendaciones.csv")
+```
+
+
+### **Ejercicio 2**
+
+Usando los datos de Movielens y suponiendo que si alguien ha puntuado una película es que la ha visto (es decir si hay puntuación poner un 1). Sacar algunas reglas de asociación.
+
+**PISTA**: Convertir la matriz en un objeto de tipo `?arules::transactions`
+
+```{r}
+
+install.packages('tidyr')
+library(readr)
+library(dplyr)
+library(tidyr)
+
+ratings <-  read_delim("../datos/ml-1m/ratings.dat",delim = "::",
+                        col_names = FALSE
+                        ) %>% 
+            select(X1,X3,X5,X7) %>% 
+            rename(
+              UserID = X1,
+              MovieID = X3,
+              Rating = X5,
+              Timestamp = X7
+            )
+
+peliculas <-  read_delim("../datos/ml-1m/movies.dat",delim = "::",
+                        col_names = FALSE
+                        ) %>% 
+              select(X1,X3,X5) %>% 
+              rename(
+                MovieID = X1,
+                Title = X3,
+                Genres = X5
+              )
+
+ratings %>% 
+  left_join(peliculas %>% select(-Genres)) %>% 
+  select(UserID,Title) %>% 
+  mutate(value = 1) %>% 
+  distinct() %>% 
+  mutate(
+    Title = gsub("\\W+","_",Title)
+  ) %>% 
+  spread(key = Title,value = value , fill = 0) %>% 
+  select(-1) %>% 
+  as.matrix() -> transacciones
+
+transacciones[1:5,1:5]
+
+
+library(arules)
+transacciones <- as(transacciones, "transactions")
+transacciones
+
+itemFrequencyPlot(transacciones,topN = 20,type = "absolute",col = "#A7DBD8")
+
+reglas <- apriori(transacciones)
+
+# Muchas reglas voy a ser más exigente
+
+reglas <- apriori(transacciones, parameter = list(supp = 0.25, conf = 0.9))
+
+inspect(reglas[1:5])
+
+# Vale... todo el mundo ha visto Star Wars...
+
+reglas <- apriori(transacciones,
+                  parameter = list(supp = 0.2, conf = 0.9),
+                  appearance = list(none = "Star_Wars")
+                  )
+inspect(reglas)
+
+```

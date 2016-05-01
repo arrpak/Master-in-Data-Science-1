@@ -1,0 +1,164 @@
+---
+title: Regresión lineal y logística
+author: Carlos J. Gil Bellosta
+date: 2016-02-13
+output: 
+  revealjs::revealjs_presentation:
+    theme: sky
+    highlight: pygments
+---
+
+# Regresión lineal
+
+## Planetamiento probabilístico
+
+- $Y$ es una variable aleatoria continua (p.e. un salario, una temperatura, etc.)
+- $Y$ depende de unas variables predictoras ($x_1, \dots, x_n$)
+- Se puede escribir
+$$ y_i \sim N(a_0 + a_1 x_{i1} + \dots + a_n x_{in}, \sigma).$$
+- Eso significa muchas cosas:
+    - Las observaciones son independientes
+    - La varianza es igual para todas las observaciones
+    - Los errores tienen distribución normal
+
+
+## Mínimos cuadrados
+
+- En tal caso, como consecuencia de la maximización de la verosimilitud, los coeficientes _óptimos_ son los que minimizan la función de pérdida
+$$\sum_i (y_i - (a_0 + a_1 x_{i1} + \dots + a_n x_{in}))^2$$
+- Los matemáticos se han percatado de que el mínimo de esa función es 
+$$a = (X^\prime X)^{-1} X^\prime Y,$$
+donde $Y$ es el vector de las observaciones $y_i$ y $X$ es la matriz cuya filas son $(1, x_{i1}, \dots, x_{in})$. 
+
+
+## Modelo lineal en R
+
+```{r}
+summary(lm(dist ~ speed, data = cars))
+```
+
+
+## Variables categóricas
+
+```{r}
+datos <- read.table("data/admitidos.csv", sep = "\t", header = TRUE)
+datos$rank <- factor(datos$rank)
+summary(lm(gpa ~ gre + rank, data = datos))
+```
+
+
+## Pruebas de hipótesis y modelo lineal
+
+```{r}
+tmp <- sleep
+tmp$group <- factor(tmp$group)
+summary(lm(extra ~ group, data = tmp))
+```
+
+## Comparando dos modelos
+
+```{r}
+mod.base <- lm(dist ~ speed, data = cars)
+mod.alt  <- lm(dist ~ speed + I(speed^2), data = cars)
+anova(mod.base, mod.alt)
+```
+
+## Selección de variables (no recomendado)
+
+```{r, eval = FALSE}
+dat <- read.table("data/student-mat.csv", header = T, sep = ";")
+mod.0 <- lm(G3 ~ 1, data = dat)
+mod.1 <- lm(G3 ~ ., data = dat)
+res <- step(mod.1, mod.0, direction = "both")
+summary(res)
+```
+
+## Interacciones
+
+- Hay variables que pueden _interaccionar_:
+    - Las plantas crecen con el tiempo
+    - Pero igual crecen a distinta velocidad según la especie
+    - En ese caso se dice que hay una _interacción_ entre tiempo y especie
+- Modelo sin interacciones: `h ~ t + especie + z`
+- Modelo con interacciones: `h ~ t * especie + z`
+- Eso hace aparecer un coeficiente distinto por especie
+
+## Interpretación de los coeficientes
+
+- En un modelo con una especificación sencilla como `y ~ a + b + c + d` la interpretación es sencilla: para cada unidad de incremento de (p.e.) `a`, `y` crece en tantas unidades como el coeficiente de `a`.
+- ¿Y si el modelo es `log(y) ~ a + b`?
+- ¿Y con un modelo con interacciones al como `y ~ estu*sexo + edad + provincia * sexo`?
+
+
+# Regresión logística
+
+## Planetamiento probabilístico
+
+- $Y$ es una variable aleatoria dicotómica (sí/no, true/false, 0/1, etc.)
+- $Y$ depende de unas variables predictoras ($x_1, \dots, x_n$)
+- Se puede escribir
+$$ y_i \sim \text{Bernoulli}(p(a_0 + a_1 x_{i1} + \dots + a_n x_{in})),$$
+donde $p(x) = \exp(x) / (1 + \exp(x))$
+- Además, las variables son independientes
+- El problema: encontrar los parámetros del modelo
+
+
+## Interpretación gráfica
+
+```{r, echo = FALSE, fig.width=6, fig.height=5.5}
+foo <- function(x) exp(x) / (1 + exp(x))
+x <- sort(runif(200, -4, 4))
+y <- foo(x)
+y <- sapply(y, function(x) rbinom(1, 1, x))
+modelo <- glm(y ~ x, family = binomial)
+pred <- coefficients(modelo)[2] * x + coefficients(modelo)[1]
+pred <- foo(pred)
+plot(x, y, main = "Regresión logística\ninterpretación gráfica", ylab = "prob")
+lines(x, pred, col = "red")
+```
+
+
+## Optimización por MV
+
+- La verosimilitud es (obviando el coeficiente combinatorio)
+$$ l(a_0, \dots, a_n) = \prod_{y=1} p(a_i) \prod_{y=0} (1-p(a_i))$$
+- No se hay una función de pérdida como las de antes
+- Tampoco se puede encontrar el mínimo usando álgebra lineal (como con la regresión lineal)
+- Pero existe un método muy rápido (Nelder, 1972) para encontrar esos coeficientes mediante iteraciones
+- Este algoritmo se puede aplicar la regresión lineal, la logística, de Poisson, etc. y está integrada en la función `glm` de R
+
+
+## Optimización por MV
+
+- La verosimilitud es (obviando el coeficiente combinatorio)
+$$ l(a_0, \dots, a_n) = \prod_{y=1} p(a_i) \prod_{y=0} (1-p(a_i))$$
+- No se hay una función de pérdida como las de antes
+- Tampoco se puede encontrar el mínimo usando álgebra lineal (como con la regresión lineal)
+- Pero existe un método muy rápido (Nelder, 1972) para encontrar esos coeficientes mediante iteraciones
+- Este algoritmo se puede aplicar la regresión lineal, la logística, de Poisson, etc. y está integrada en la función `glm` de R
+
+
+## Interacciones e interpretación de coeficientes
+
+- Como en la regresión lineal... con una salvedad:
+    - Como el término lineal _está dentro_ de una función no lineal,
+    - un mismo incremento de una variable puede producir diferencias distintas de probabilidad en _zonas_ distintas.
+   
+   
+## Interacciones e interpretación de coeficientes
+
+```{r, echo = FALSE, fig.width=6, fig.height=4}
+foo <- function(x) exp(x) / (1 + exp(x))
+x <- sort(runif(200, -4, 4))
+y <- foo(x)
+y <- sapply(y, function(x) rbinom(1, 1, x))
+modelo <- glm(y ~ x, family = binomial)
+pred <- coefficients(modelo)[2] * x + coefficients(modelo)[1]
+pred <- foo(pred)
+plot(x, y, main = "Regresión logística\ninterpretación gráfica", ylab = "prob")
+lines(x, pred, col = "red")
+```    
+
+
+
+

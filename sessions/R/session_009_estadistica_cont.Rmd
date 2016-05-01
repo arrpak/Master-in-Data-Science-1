@@ -1,0 +1,319 @@
+---
+title: Estadística bayesiana, modelización y máxima verosimilitud
+author: Carlos J. Gil Bellosta
+date: 2016-02-12
+output: 
+  revealjs::revealjs_presentation:
+    theme: sky
+    highlight: pygments
+---
+
+# Estadística bayesiana
+
+## Probabilidad condicional (y total)
+
+- Las mujeres tienen una menor tasa de accidentes que los hombres: $P(\text{accidente}|M) < P(\text{accidente}|H)$.
+- Ejercicio: 
+    - $P(a|H) = 0.1$
+    - $P(a|M) = 0.05$
+    - 45% de mujeres ($P(M)$ = 45%)
+    - ¿Cuál es la probabilidad de que haya un accidente?
+
+## Teorema de Bayes: el problema
+
+- Ejercicios: 
+    - Si hay un accidente, ¿cuál es la probabilidad de que el involucrado sea mujer?
+    - En un país hay ciudadanos de dos razas, A (10%) y B (90%). El 60% de los delincuentes (1% del total) son de raza A. ¿Cuál es la probabilidad de que un ciudadano de raza A (B) sea delincuente? 
+- El problema es obtener $P(B|A)$ a partir de $P(B|A)$
+
+
+## Teorema de Bayes
+
+$$P(X | A) = \frac{P(A|X)P(X)}{P(A)}$$
+
+¡Sirve para _darle la vuelta_ a las probabilidades condicionales!
+
+Demostración: se basa en la definición 
+$$P(A \cap X) = P(A | X) P(X)$$
+
+
+## Pruebas de hipótesis: recordatorio
+
+- Tiramos una moneda 100 veces y obtenemos 60 caras
+- ¿Compatible con `p=.5`?
+- Podemos hacer una prueba de hipótesis clásica con hipótesis nula ($H_0$): `p=0.5`
+- De otra manera: ¿cómo de raras son 60 caras en 100 tiradas si `p=.5`?
+
+
+## Prueba de hipótesis mediante remuestreos
+
+```{r, fig.width=6, fig.height=3.5}
+N <- 100; n <- 60; p <- 0.5
+muestras <- rbinom(10000, N, p)
+hist(muestras, breaks = 30, col = "gray", main = "", xlab = "")
+abline(v = n, col = "red")
+```
+
+
+## El p-valor: proporción de muestras que superan el valor obtenido
+
+```{r, fig.width=6, fig.height=3.5}
+mean(muestras >= n)
+```
+
+El p-valor es la proporción de muestras que exceden (en este caso) el valor obtenido.
+
+Conceptualmente, es $P(D|H_0)$, la probabilidad de tus datos dada la hipótesis nula.
+
+
+## Estadística bayesiana y pruebas de hipótesis
+
+- Recordad que el p-valor era $P(D|H_0)$.
+- ¡Pero eso no es lo importante!
+- Lo importante es $P(H_0|D)$.
+- Es decir, lo _verosímil_ que es la hipótesis nula $H_0$ a la vista de los datos.
+- La estadística bayesiana trata de medir $P(H_0|D)$ usando el teorema de Bayes, es decir,
+
+$$P(H_0 | D) = \frac{P(D|H_0) P(H_0)}{P(D)}$$
+
+
+## rstan: código
+
+```{r, cache = TRUE, cache.path = "/tmp/r_cache", message=FALSE, results = "hide"}
+library(rstan)
+
+stanmodelcode <- '
+data {
+  int<lower=1> N;
+  int n;
+}
+ 
+parameters {
+  real<lower=0, upper = 1> p;
+}
+ 
+model {
+  // priori no informativa
+  p ~ beta(1,1);  
+
+  // verosimilitud
+  n ~ binomial(N, p);  
+}
+'
+
+fit <- stan(model_code = stanmodelcode, 
+            data = list(N = 100, n = 60),
+            iter = 12000, warmup = 2000, 
+            chains = 4, thin = 10)
+```
+
+
+## rstan: resultados
+
+```{r, fig.width=6, fig.height=3.5}
+res <- as.data.frame(fit)
+hist(res$p, breaks = 30, col = "gray", main = "", xlab = "")
+abline(v = 0.5, col = "red")
+```
+
+
+
+
+
+# Modelización estadística
+
+## Modelos y realidad
+
+- Los científicos (físicos, economistas, sicólogos, etc.) plantean modelos teóricos
+- Un modelo teórico es también una _hipótesis_ (o modelo hipotético, si se prefiere)
+- Los modelos teóricos serán _válidos_ si se adecúan a la realidad (a través de datos)
+- Además de eso, la estadística te puede decir cuánto (o en qué medida)
+
+
+## Estadística y aprendizaje automático
+
+- El aprendizaje automático busca predecir, crear cajas negras
+- ¡La predicción puede ser (y de hecho, es) útil en sí!
+- Pero generalmente el aprendizaje automático no presta atención a la interpretabilidad
+- Ejemplos:
+
+    - El aprendizaje automático ha sido capaz de crear una máquina que juega (¡muy bien!) al Go
+    - La estadística mide cuánto más de X se va a vender si el precio baja un 10%
+
+
+## Introducción al modelo lineal
+- Nos interesa una variable X (p.e., log del salario)
+- Podemos hacer como el periódico: media de X, $\mu$
+- Pero sabemos que hay variabilidad alrededor de X: si la suponemos normal, $X \sim N(\mu, \sigma)$
+- Pero el salario depende de muchas variables (conocidas y desconocidas). Por eso 
+$$X_i \sim N(\mu_i, \sigma)$$
+donde $X_i$ es el (log)salario del sujeto $i$ y $\mu_i$ depende de variables $x_{i1}, \dots, x_{in}$.
+
+
+## Introducción al modelo lineal (cont.)
+
+- Si suponemos que $\mu_i = a_0 + a_1 x_{i1} + \dots + a_n x_{in}$, tenemos el _modelo lineal_ (o regresión lineal).
+- El problema: encontrar los valores $a_j$ _óptimos_.
+
+
+## Introducción a la regresión logística
+- Nos interesa una variable X (p.e., que alguien esté en paro)
+- Podemos hacer como el periódico: la tasa de paro es $p$.
+- Se podría pensar que $X \sim \text{Bernoulli}(p)$
+- Pero la tasa de paro depende de muchas variables (conocidas y desconocidas). Por eso podemos pensar que
+$$X_i \sim \text{Bernoulli}(p_i)$$
+donde $p_i$ depende de variables $x_{i1}, \dots, x_{in}$.
+
+## Introducción a la regresión logística (cont.)
+- Si suponemos que $p_i = f(a_0 + a_1 x_{i1} + \dots + a_n x_{in})$, tenemos la regresión logística.
+- Nota: como $0 \le p \le 1$, $f$ tiene que ser una función que _mapee_ en dicho rango.
+- Se usa 
+$$f(x) = \frac{\exp(x)}{1 + \exp(x)}$$
+- El problema, de nuevo: encontrar los valores $a_j$ _óptimos_.
+
+
+## Introducción al modelo lineal generalizado
+- X puede ser:
+    - Una variable continua (regresión lineal)
+    - Una probabilidad (regresión logística)
+    - Un conteo (modelo de Poisson / binomial negativa)
+    - (Y algunos más que aparecen menos frecuentemente)
+- Los parámetros de la distribución dependen del sujeto a través de funciones lineales de variables predictoras
+
+
+## El problema
+- Determinar si la realidad se ajusta a la especificación estadística
+    - ¿Son independientes los sujetos?
+    - ¿Siguen realmente esa distribución teórica?
+- Encontrar los coeficientes de esa relación lineal
+- Determinar si el modelo se ajusta o no razonablemente a los datos
+
+
+## Otros modelos probabilísticos
+- El modelo lineal generalizado no agota los modelos estadísticos. Los hay para series temporales, medidas repetidas, geoestadística, etc.
+- Pero todos se basan en una especificación probabilística de los datos
+- Y en todos están presentes los problemas mencionados arriba:
+    - Encontrar los coeficientes o parámetros
+    - Determinar si el modelo se ajusta o no razonablemente a los datos
+
+
+
+# Máxima verosimilitud
+
+## Máxima verosimilitud: valor más verosímil del parámetro
+- Máxima verosimilitud: dar por bueno el valor del parámetro que hace más probable el resultado.
+- Conceptualmente, es sencillo y las implicaciones son poderosas.
+- ¡Una de las ideas más notables del s. XX!
+
+## Un ejemplo con monedas
+
+- 100 tiradas, 60 caras
+- ¿Cuál es el valor _más verosímil_ de $p$?
+- Podemos construir la _función de verosimilitud_, 
+$$l(p) = {100 \choose 60}p^{60} (1-p)^{40}$$
+que nos da la probabilidad en función del parámetro $p$.
+- Es una función que nos enseñaron a maximizar en bachillerato: derivar respecto a $p$, etc.
+
+## La función de verosimilitud
+
+```{r, fig.width=6, fig.height=3.5}
+curve(dbinom(60, 100, x), from = 0, to = 1,
+      xlab = "p", ylab = "", main = "Función de verosimilitud")
+```
+
+## Notas sobre la función de verosimilitud
+- Es un producto porque las observaciones (tiradas) son *independientes*
+- Si no son independientes, la verosimilitud existe... pero es (mucho) más complicada
+- Siendo un producto, tomar logaritmos ayuda (sobre todo cuando hay que derivar, etc.): el máximo de $f(x)$ está en el mismo valor que el de $\log(f(x))$.
+- Ejercicio: ¿os atrevéis a buscar el máximo de $l(p)$ a mano? 
+
+
+## Un ejemplo con bombillas
+
+- Tienes 100 bombillas que en un banco de pruebas han estado encendidas $n_i$ horas cada una.
+- Se supone que tienen una _vida exponencial_: 
+$$P(D \le t) = \int_0^t \lambda \exp(-\lambda x) dx$$
+- La verosimilitud es $l(\lambda) = \prod_i \lambda \exp(-\lambda n_i)$
+- Ejercicio: ¿cuál es la estimación del parámetro por máxima verosimilitud?
+
+
+## Máxima verosimilitud en el modelo lineal
+
+- En el modelo lineal la función de verosimilitud es
+$$l(a_i) = \prod \Phi(y_i - \mu_i, \sigma),$$
+donde $\mu_i = a_0 + a_1 x_{i1} + \dots + a_n x_{in}$ y $\Phi = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(\frac{-(y - \mu)^2}{2\sigma^2}\right)$
+- Desarrollando, queda
+$$l(a_i) = \left(\frac{1}{\sigma\sqrt{2\pi}}\right)^n \exp\left( \frac{-\sum(y_i-\mu_i)^2}{{2\sigma^2}}\right)$$
+
+
+## MV en el modelo lineal (cont.)
+
+- Simplificando, i.e., tomando logs e ignorando lo que no depende de $a_i$, queda
+$$-\sum_i (y_i - (a_0 + a_1 x_{i1} + \dots + a_n x_{in}))^2$$
+- Maximzar lo anterior es equivalente a minimizar
+$$\sum_i (y_i - (a_0 + a_1 x_{i1} + \dots + a_n x_{in}))^2,$$
+que es la _función de pérdida_.
+- Por eso, al algoritmo se le llama _mínimos cuadrados_.
+
+## Mínimos cuadrados, gráficamente
+
+```{r, message = FALSE, echo = FALSE, fig.width=6, fig.height=3.5}
+require(ggplot2)
+foo <- function(x) 10 + 2 * x
+tmp <- data.frame(speed = cars$speed, dist.real = cars$dist, dist = foo(cars$speed))
+ggplot(cars, aes(x = speed, y = dist)) + geom_point() +
+  geom_abline(intercept = 10, slope = 2, col = "red") +
+  geom_segment(data = tmp, aes(x = speed, xend = speed, y = dist, yend = dist.real), 
+               col = "blue", alpha = 0.5)
+```
+
+
+## Funciones de pérdida
+
+- A partir de la verosimilitud para el modelo lineal hemos derivado la función de pérdida
+
+$$ L(a_i) = \sum_i (y_i - f_{a_j}(x_i))^2$$
+
+- Muchos modelos más allá del lineal se ajustan minimizando funciones de pérdida como esa.
+- O variantes tales como
+
+$$ L(a_i) = \sum_i |y_i - f_{a_j}(x_i)|$$
+o
+$$ L(a_i) = \sum_i (y_i - f_{a_i}(x_i))^2 + \lambda \sum_j a_j^2$$
+
+
+## Optimización
+
+- Si $n$ es grande y $f_{a_i}$ es complicada, minimizar la pérdida es _imposible_.
+- Incluso con `optim` y similares.
+- Hacen falta ideas _ad hoc_, es decir, 
+    - _Atajos_ para llegar al mínimo (p.e., `lm` o `glm`)
+    - Heurísticas (p.e., los árboles de regresión, `gbm`, aprendizaje _reforzado_ en redes neuronales, etc.)
+    
+
+# Modelización bayesiana
+
+## Modelización bayesiana
+
+- Es una alternativa a la máxima verosimilitud / optimización de funciones de pérdida
+- Está basada en la estructura probabilística del modelo
+- Calcula $P(\beta|D)$, es decir, la distribución de los parámetros a la vista de los datos
+- Permite incluir información _a priori_ en los modelos
+
+## Información a priori
+
+- Estamos en el siglo XXI
+- ¡Ya sabemos mucho sobre muchos problemas!
+- ¿Hay que empezar de cero en cada uno de ellos?
+- ¿Cómo se manifiesta la información _a priori_?
+    - Se sabe que un coeficiente tiene que estar en un rango determinado
+    - Se sabe que el efecto de una intervención no puede ser superior a cierto umbral
+    - Etc.
+    
+## Creación de modelos bayesianos
+
+- Determinar la estructura probabilística del problema
+- Identificar la información _a priori_
+- Traducirlo a código de `rstan`
+- Correr las cadenas
+- Interpretar los resultados

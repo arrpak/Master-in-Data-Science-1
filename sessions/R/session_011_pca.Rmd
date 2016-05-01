@@ -1,0 +1,117 @@
+---
+title: Componentes principales
+author: Carlos J. Gil Bellosta
+date: 2016-02-13
+output: 
+  revealjs::revealjs_presentation:
+    theme: sky
+    highlight: pygments
+---
+
+## Introducción al PCA
+
+- PCA sirve para reducir la dimensionalidad de un conjunto de datos
+- Se parece a la compresión con pérdida de imágenes o películas
+- Usa un conjunto de combinaciones lineales de las variables no correladas
+- Esta representación de baja dimensión puede ser usada como herramienta de visualización
+
+
+## PCA con dos variables
+
+```{r, fig.width=6, fig.height=3.5}
+n <- 250
+a <- rnorm(n); b <- rnorm(n)
+dat <- as.matrix(data.frame(x = a, y = .5 * (0.4 * b + a * sqrt(1 - 0.4^2))))
+plot(dat[,1], dat[,2], main = "", xlab = "", ylab = "", asp = 1)
+```
+
+## PCA con dos variables: nuevos ejes
+
+```{r, fig.width=6, fig.height=3.5}
+res <- princomp(dat)
+plot(dat[,1], dat[,2], main = "", xlab = "", ylab = "", asp = 1)
+lines(c(0, 3 * res$loadings[1,1]), c(0, 3 * res$loadings[2,1]), col = "red", lwd = 3)
+lines(c(0, 3 * res$loadings[1,2]), c(0, 3 * res$loadings[2,2]), col = "red", lwd = 3)
+```
+
+
+## PCA con dos variables: matricialmente
+
+```{r}
+tmp <- t(t(dat) - res$center)    # resta las medias
+tmp <- tmp %*% res$loadings
+head(tmp, 3)
+```
+
+```{r}
+head(res$scores, 3)
+```
+
+
+## Varianza decreciente
+
+```{r, fig.width=6, fig.height=4.5}
+plot(res, main = "Gráfico de acantilado")
+```
+
+
+## Con más columnas
+
+- Usando `USArrests`, que son tasas (por 100k) de distintos tipos de crímenes
+
+```{r, fig.width=6, fig.height=3.5}
+plot(princomp(USArrests), main = "Gráfico de acantilado")
+```
+
+- Se ve como hay una variable _latente_ principal
+
+
+## PCA y aproximaciones
+
+- ¿Qué pasa si quitamos las columnas menos relevantes?
+- ¡Obtenems una aproximación al conjunto de datos original!
+- Solo que con menos columnas
+- P.e., podemos resumir `USArrests` (4 cols) en 2 cols
+
+
+## PCA y aproximaciones
+
+```{r, fig.width=6, fig.height=3.5}
+res <- princomp(USArrests, cor = TRUE)
+plot(res$scores[,1], res$scores[,2], asp = 1)
+```
+
+
+## Biplots
+
+```{r, fig.width=6, fig.height=4.5}
+biplot(res)
+```
+
+
+## Otro biplot
+
+![Presupuestos generales](http://www.datanalytics.com/wp-uploads/2012/11/presupuestos_generales_2008-2011.png)
+
+
+## Usos del PCA
+
+- A veces, para descubrir _factores latentes_ en datos
+- A veces, para representar información gráficamente
+- Muchas veces, para extraer un número reducido de columnas que:
+    - Tienen casi tanta información que el conjunto de datos original
+    - Se utilizan luego en modelos, etc. en lugar de las originales
+    
+    
+## Otras factorizaciones útiles 
+
+- SVD (que subyace al PCA)
+- NNMF (factorización no negativa de matrices)
+
+
+## Referencias
+
+- T. Hastie et al, _Introduction to Statistical Learning_, capítulo 10.2
+- Las entradas que aparecen en `http://www.datanalytics.com/tag/pca/`
+
+

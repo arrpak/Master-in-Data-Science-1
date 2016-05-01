@@ -1,0 +1,471 @@
+---
+title: Aprendizaje no supervisado
+author: Carlos J. Gil Bellosta
+date: 2016-02-13
+output: 
+  revealjs::revealjs_presentation:
+    theme: sky
+    highlight: pygments
+---
+
+# Introducción al aprendizaje no supervisado
+
+
+## La promesa
+
+![clasificacion objetos](grf/clasificacion_objetos.jpg)
+
+
+## Pero...
+
+![clasificacion objetos](grf/clasificacion_objetos_colores.jpg)
+
+## Programa
+
+* Distancias
+* k-medias y similares
+* Clústering jerárquico
+* Cuestiones prácticas
+
+
+## Lecturas recomendadas (I)
+
+* Tibshirani et al., _An Introduction to Statitical Learning_, capítulo 10. Es una introducción accesible al tema con ejemplos en R.
+* Tibshirani et al., _The Elements of Statistical Learning_. El capítulo sobre aprendizaje no supervisado es una versión más profunda y teórica del anterior. El libro está disponible en internet gratuita y legalmente.
+* Kaufman y Rousseeuw, _Finding Groups in Data: An Introduction to Cluster Analysis_. Es un libro difícil de encontrar que describe con profundidad los métodos usados en el paquete `cluster` de R.
+
+## Lecturas recomendadas (II)
+
+* Joel Cadwell, _Warning: Clusters May Appear More Separated in Textbooks than in Practice_, en el blog _Engaging marketing research_. Un artículo muy interesante, así como muchos de los del mismo autor en dicho blog sobre el tema.
+* Las entradas que aparecen en `http://www.datanalytics.com/tag/clustering/` en mi blog.
+
+
+
+# Distancias
+
+## Distancias y clústering
+
+* El objetivo del clústering es encontrar grupos de objetos similares
+* Similares... ¿en qué sentido?
+* La similaridad se concreta en una (pseudo)distancia
+
+
+## Distancia: el concepto matemático
+
+- Dados objetos `i, j, k,...`, una distancia es una función real `d` de parejas de ellos tal que
+    1. `d(i,j) >= 0`
+    2. `d(i,j) = 0` si y solo si `i = j`
+    3. `d(i,j) = d(j,i)`
+    4. `d(i,k) <= d(i,j) + d(j,k)`
+
+- Ejercicios: 
+    - pensar en una situación en que no se cumpla 2
+    - pensar en una _distancia_ que no cumpla 3
+    -(opcional, para matemáticos): buscar casos de _distancias_ que no cumplan 4
+
+
+## Seudodistancias: distancias que no cumplen las propiedades anteriores
+
+* Típicamente, se trabaja con seudodistancias
+* Las seudodistancias no cumplen las propiedades anteriores
+* Aun así sirven para el propósito de encontrar _objetos similares_
+
+
+## Distancias de libro para vectores numéricos
+
+- Dados puntos $x=(x_1,\dots, x_n)$ e $y=(y_1,\dots, y_n)$, suelen usarse las distancias
+    * euclídea (o $l_2$), $(\sum (x_i - y_i)^2) )^{1/2}$
+    * _manhattan_ (o $l_1$), $\sum |x_i - y_i|$
+- Y a veces (o casi nunca) también
+    * $l_\infty$, $\text{max} |x_i - y_i|$ o, la general,
+    * $l_p$, $(\sum |x_i - y_i|^p )^{1/p}$
+
+
+## Distancias de libro y bolas
+
+![bolas](grf/bolas_metricas_alt.png)
+
+Para `0<p<1` las _bolas_ no son convexas.
+
+
+## Normalización y reiteración
+
+- Supongamos que las variables son todas numéricas
+    * Si las normalizamos, todas tienen la misma importancia
+    * Si hay reiteraciones, hay _áreas_ que tienen exceso de importancia
+    * Se pueden usar pesos (o normalizaciones ad hoc) para mitigar el problema
+
+
+## La función dist de R
+
+* La función `dist` de R calcula distancias entre las filas de una matriz (numérica)
+* Admite diversas distancias (las contempladas y alguna otra, como la `camberra`)
+* Crea una matriz (o submatriz) de dimensión nxn (o nxn/2); ¡puede ser enorme!
+* Esta matriz puede alimentar algoritmos de clústering (u otros), en lugar de los datos originales
+* Ejercicio: ejecutar despacio los ejemplos incluidos en `?dist`
+
+
+## Variables no numéricas
+
+* A menudo las variables no son numéricas: estado civil, provincia, etc.
+* Este tipo de variables se puede _binarizar_: estado civil se puede convertir en una serie de variables (soltero, casado, etc.) con valores 0-1.
+* Ejercicio mental: ¿qué tipo de problemas puede causar la binarización? Por ejemplo,
+    * Cuando hay muchas categorías
+    * Cuando algunas categorías ocurren poco frecuentemente
+
+
+## Distancias para varias variables binarias: un problema
+
+* _Distancias simétricas:_ 0 si hay coincidencia, 1 si no la hay.
+* Si de n varibles hay m, coincidencias, la distancia es (n-m)/n.
+
+> Pero esto no es siempre razonable: ¿si la variable es si el sujeto tiene un premio Goya?
+
+
+## Distancias asimétricas
+
+* _Distancias asimétricas:_ 
+    * Numerador: número de diferencias (como antes)
+    * Denominador: número de variables en que al menos una de las observaciones es 1
+  
+* Es decir, no contamos las variables en que ambas observaciones son 0.
+
+
+## Distancias para varias variables categóricas (más de una categoría)
+
+* Además de la binarización (discutida antes), se pueden usar las coincidencias.
+* Ejercicio: ¿existe diferencia entre binarizar y usar una distancia asimétrica?
+
+
+## Variables ordinales
+
+* Ejercicio: ¿qué métrica se te ocurre para variables ordinales? P.e: bueno, regular, malo.
+
+
+## Implementación cluster::daisy
+
+* `cluster::daisy` implementa la distancia de Gower para observaciones con variables de diverso tipo
+* La distancia de Gower una suma ponderada de distancias (y hay que proporcionarle pesos)
+* La función `cluster::daisy` permite usar distancias simétricas/asimétricas para variables binarias
+* Ejercicio: repasar los ejemplos de `?daisy`
+
+
+## Distancias en la práctica
+
+* Ejercicio mental: ¿qué distancia hay entre edad y sexo?
+* Ejercicio (mental): ¿qué efecto tiene sobre la cualidad de "no supervisado" un algoritmo en el que el usuario decide la escala de las variables (consciente o inconscientemente)?
+
+
+## Más sobre distancias
+
+* ¿Distancias para formas geométricas? 
+* ¿Distancias en _feature spaces_?
+
+
+# k-medias y similares
+
+## Clústering: identificar de grupos
+
+```{r, echo = FALSE, fig.width=6, fig.height=4.5}
+grupos <- 3
+n.grupo <- 20
+n <- grupos * n.grupo
+x <- rnorm(n, 0, 0.2)
+y <- rnorm(n, 0, 0.2)
+
+centros.x <- rep(c(0, 1.5, 3), each = n.grupo)
+centros.y <- rep(c(0, 1.5, 0), each = n.grupo)
+
+plot(x + centros.x, y + centros.y, xlab = "", ylab = "")
+```
+
+
+## Objetivos
+
+* Resumir información (relacionado con el _vector quantization_ que veremos más tarde)
+* Descubrir la estructura interna de los datos
+
+
+## Problemas con el planteamiento
+
+* Bidimensional, pero típicamente hay muchas dimensiones
+* Dimensiones numéricas, pero típicamente las hay también categóricas, binarias,...
+* Clústers esféricos
+* Clústers bien definidos, pero típicamente hay una nube continua de puntos
+* No hay _outliers_
+
+
+## Clústering y clasificación
+
+* A veces se confunden, pero:
+    * *Clasificación:* asignar individuos a grupos predefinidos
+    * *Clústering:* descubrimiento de nuevos grupos
+
+
+## Objetivo: minimizar la dispersión intragrupo
+
+* K es el número de clústers (fijo)
+* Queremos reducir el valor
+$$D = \sum_1^K \frac{1}{n_k} \sum_{i,j \in C_k} d_{ij}$$
+* Para minimizar $D$ podemos probar con combinaciones de elementos, pero hay demasiadas. Hay que aproximar.
+
+
+## Dispersión intragrupo y distancia euclídea
+
+Si la distancia usada es la euclídea, un poco de álgebra demuestra que
+
+$$D = 2 \sum_{k=1}^K \sum_{i\in C_k} d(x_i, \bar{x}_k)$$
+
+donde $\bar{x}_k$ es la media de los puntos del clúster $k$.
+
+k-medias busca una solución aproximada a ese problema de minimización.
+
+
+## k-medias: el algoritmo
+
+1. Seleccionar centros al azar
+2. Identificar los puntos más próximos a cada centro
+3. Definir los nuevos centros como las medias de los puntos asignados a cada centro
+4. Repetir 2-3 hasta que los centros no cambien
+
+Notas: 
+    * el punto 4 equivale a que no hay "cambios de asignación"
+    * el paso 2 puede interpretarse como un _map_ y el 3 como un _reduce_.
+
+
+
+## k-medias: una animación
+
+`https://www.youtube.com/watch?v=zaKjh2N8jN4`
+
+
+## Propiedades del algoritmo
+
+* $D$ decrece en cada iteración
+* El algoritmo siempre converge
+* ¡Pero no siempre al mínimo global!
+* El resultado depende de los centros iniciales (por eso, a veces, se usan varios inicios para elegir el mejor resultado).
+
+
+## Una digresión: "vector quantization"
+
+* k-medias tiene su origen en la ingeniería (electrónica, telecomunicaciones)
+* Con k-medias se puede _cuantizar_ una señal
+* Cuantizar consiste en crear un diccionarios finitos
+* Eso permite comprimir imágenes, etc.
+* Ejemplo: perfil de tráfico en navegadores de Tomtom: cada tramo de calle tiene asignado un perfil horario de intensidad de tráfico.
+* A los centros resultantes de k-means, por eso, se los llama en ocasiones _prototipos_.
+
+
+## k-means: problemas
+
+* _Outliers_, que pueden _capturar_ clústers
+* Limitado a variables numéricas
+* Maldición de la dimensionalidad
+
+
+## k-medioides: introducción
+
+* Posterior a k-means
+* Permite distancias arbitrarias
+* Permite usar variables no solo numéricas
+* Los centros serán puntos del conjunto de datos original
+
+
+## k-medioides: algoritmo
+
+1. Selecciona K puntos del conjunto de datos original como centroides de partida
+2. Crea clústers alrededor de dichos puntos (los más cercanos a cada uno de ellos)
+3. Busca dentro de cada uno de ellos el punto que minimiza la suma de distancias
+4. Selecciona dichos nuevos puntos como centroides temporales y ejecuta 2-3 de nuevo
+5. Detén el algoritmo cuando no haya nuevos cambios
+
+
+## k-medioides: propiedades
+
+* Las mismas que k-medias:
+    * Cada iteración hace decrecer la función objetivo
+    * Siempre converge
+    * Pero puede quedar atrapado en un mínimo local
+* Generalmente, $D$ calculado con k-medioides es mayor que el de k-medias
+* Es más oneroso computacionalmente (por culpa del proceso de selección de los nuevos medioides)
+
+
+## Problemas abiertos:
+
+* Número óptimo de clústers: ¡hay que guiarse de heurísticas!
+* Calidad de los clústers: ¿hasta qué punto se solapan? ¿Son diferentes?
+* Para estos problemas, la estadística no ofrece soluciones; el conocimiento del problema en cuestión, tal vez sí.
+
+
+## Funciones de R
+
+* `kmeans` para k-medias
+* `cluster::pam` y `cluster::clara`; el segundo es una versión del primero que permite manejar conjuntos de datos más grandes a costa de generar, posiblemente, una peor solución
+
+
+
+# Clústering jerárquico
+
+## Planteamiento: unión de puntos próximos
+
+```{r, echo = FALSE, fig.width=6, fig.height=4.5}
+grupos <- 3
+n.grupo <- 20
+n <- grupos * n.grupo
+x <- rnorm(n, 0, 0.2)
+y <- rnorm(n, 0, 0.2)
+
+centros.x <- rep(c(0, 1.5, 3), each = n.grupo)
+centros.y <- rep(c(0, 1.5, 0), each = n.grupo)
+
+plot(x + centros.x, y + centros.y, xlab = "", ylab = "")
+```
+
+
+## Clústering jerárquico aglomerativo y divisivo
+
+* *Aglomerativo:* va uniendo puntos en clústers (de abajo a arriba)
+* *Divisivo*: va realizando cortes óptimos (de arriba a abajo)
+
+En cualquier caso, se van dando pasos y en
+
+* el extremo superior están todos los puntos (un solo clúster)
+* y en el extremo inferior hay puntos solos (cada punto es su propio clúster)
+
+
+## Dendrogramas: la marca de la casa del clústering jerárquico
+
+```{r, echo = FALSE, fig.width=6, fig.height=4.5}
+plot(hc <- hclust(dist(USArrests), "ave"))
+```
+
+## Dendrogramas: la altura de las ramas
+
+* Ejercicio: investigar rápidamente qué representa la altura de las ramas del dendrograma
+* Ejercicio: ¿a qué tipo de dendrograma daría lugar la configuración de puntos de la primera diapositiva?
+* Ejercicio: comprobarlo. Puedes generar los puntos así:
+
+```{r, eval = FALSE}
+grupos <- 3
+n.grupo <- 20
+centros.x <- rep(c(0, 1.5, 3), each = n.grupo)
+centros.y <- rep(c(0, 1.5, 0), each = n.grupo)
+n <- grupos * n.grupo
+x <- centros.x + rnorm(n, 0, 0.2)
+y <- centros.y + rnorm(n, 0, 0.2)
+```
+
+
+## Clústering aglomerativo: algoritmo
+
+* Comienza colocando a los elementos en su propio grupo
+* Une los grupos `A` y `B` cuando `d(A,B)` sea la mínima de las _distancias_ entre todas las parejas de grupos.
+
+
+## De distancias a enlaces
+
+* Distancias: para parejas de puntos
+* Enlaces (_linkages_): _distancias_ entre grupos de puntos
+* Ejercicio: ¿qué tipo de distancias se os ocurren entre dos grupos de puntos?
+
+
+## Tipos de enlaces
+
+* `single`: la menor entre clústers
+* `complete`: la mayor
+* `average`: el promedio
+* ¡Hay más en `?hclust`!
+
+Ejercicio: comparar las tres anteriores usando `plot(hclust(dist(USArrests)), "ave")` y demás.
+
+
+## Diferencias entre enlaces
+
+* `single` tiende a crear cadenas (¿es bueno o malo?), clústers poco compactos 
+* `complete`: algunos puntos pueden estar más cerca de los puntos de otros clústers que del propio
+* `ave`: es un compromiso entre ambos; pero también tiene sus inconvenientes
+
+
+## Clústering jerárquico en la práctica
+
+* No se usa demasiado directamente
+* Problemático con _big data_: no resume información
+* Se usa indirectamente en, p.e., _heatmaps_
+* Ejercicio: ejecutar y discutir (extraído de ?heatmap): 
+
+```{r, eval = FALSE}
+x  <- as.matrix(mtcars)
+rc <- rainbow(nrow(x), start = 0, end = .3)
+cc <- rainbow(ncol(x), start = 0, end = .3)
+heatmap(x, col = cm.colors(256), scale = "column",
+               RowSideColors = rc, ColSideColors = cc, margins = c(5,10),
+               xlab = "specification variables", ylab =  "Car Models")
+```
+
+
+# Cuestiones prácticas
+
+## Distancias "anómalas"
+
+* Distancias entre colores (ver `https://en.wikipedia.org/wiki/HSL_and_HSV`)
+* Distancias entre coordenadas
+* Combinaciones de este tipo de variables con otras
+
+¡Hay que programarlas a mano!
+
+
+## Variables heterogéneas
+
+* ¿Qué relación hay entre edad y sexo (p.e.)?
+* ¿Qué distancia hay entre códigos postales?
+* ¿Qué efecto tiene la acumulación de variables muy correladas?
+
+
+## La maldición de la dimensionalidad
+
+* ¿Cómo haces clústering cuando tienes potencialmente _infinitas_ variables entre las que elegir?
+* ¿Cómo varía la distancia entre puntos al aumentar el número de variables?
+
+
+## Calidad de los clústers
+
+* La calidad tiene que ver con la pureza y la distancia entre ellos
+* Relacionado con la función que minimiza el clústering, pero más cualitativo
+* Relacionado también con el significado e interpretación de los clústers
+* Los gráficos de bandera pueden ayudar al respecto
+
+
+## Interpretación de los clústers
+
+* En la práctica, hay que identificar los clústers
+* Relacionado con el _vector quantization_: ¿cuál es un representante típico del clúster?
+* Pero alrededor del representante típico, hay variaciones.
+* ¡Cuidado con las medias! ¡Cuidado con el _hombre medio_ de Quetelet!
+
+
+## Descripción de los clústers
+
+* Típicamente la gente muestra las medias de las variables más interesantes por clúster (una matriz nxm)
+* Permite comparar los clústers entre sí
+
+Pero:
+
+* Posiblemente hay más variables además de las usadas en el clúster que los distinguen
+* Hay variaciones dentro de los clústers
+
+
+## Descripción de los clústers: una propuesta
+
+* Para cada clúster y cada variable, comparar la distribución de la población subyacente con la del clúster
+* Seleccionar las variables (incluidas las no usadas en el clústering) en qué más diferencia exista entre ambas distribuciones
+* Describir el clúster en función de las variables en que más diferencia hay.
+* Pero, ¿cómo medir la distancia entre dos distribuciones (la del clúster y la general)?
+
+
+## Aplicaciones del clústering
+
+* En márketing, la identificación de segmentos de clientes
+* Es donde más lo he usado yo
+* En los ejercicios se os pide buscar otras aplicaciones interesantes y discutirlas
+

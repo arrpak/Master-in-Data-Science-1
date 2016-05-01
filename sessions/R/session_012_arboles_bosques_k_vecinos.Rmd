@@ -1,0 +1,233 @@
+---
+title: Árboles, bosques, k-vecinos (y más)
+author: Carlos J. Gil Bellosta
+date: 2016-02-13
+output: 
+  revealjs::revealjs_presentation:
+    theme: sky
+    highlight: pygments
+---
+
+# Una matriz de conceptos entrelazados
+
+## Una matriz de conceptos entrelazados
+
+- Dos problemas distintos (y conocidos):
+    - Regresión
+    - Clasificación
+- Tres modelos: árboles, bosques y k-vecinos
+- Varios mecanismos para comparar modelos:
+    - Validación y prueba
+    - Jackknife
+    - Validación cruzada
+
+
+# Regresión y clasificación
+
+## Regresión
+
+- La variable objetivo es continua
+- Una función de pérdida razonables es el RMSE (_root mean squared error_), la raíz cuadrada de
+$$\frac{1}{n} \sum_1^n (y_i - f(x_i))^2$$
+- El _mejor_ modelo es el que tenga el menor RMSE (generalmente)
+- En usos concretos hay funciones de error mejores que el RMSE que optimizar
+- La regresión lineal resuelve problemas de regresión
+
+
+## Clasificación
+
+- La variable objetivo es categórica (frecuentemente, binaria)
+- Una función de pérdida razonable es el porcentaje de error (predicciones fallidas)
+- La regresión logística resuelve problemas de clasificación (binaria)
+
+
+## Matriz de confusión
+
+- La matriz de confusión no es estadística
+- Es pura teoría de la decisión
+- Imagina que tienes un modelo para detectar fraude (clasificar fraude/no fraude)
+- El modelo asigna a cada $i$ una probabilidad (o _score_) $p_i$.
+- Alguien decide que el punto de corte óptimo es $p$:
+    - Si $p_i \ge p$, fraude.
+    - Si $p_i < p$, no fraude.
+- Entonces se puede crear una tabla con valores reales / predichos
+
+
+## Curva ROC
+
+- Vale para clasificación binaria
+- Compara, para cada punto de corte $p$, las tasas de falsos positivos y verdaderos positivos
+
+```{r, echo = FALSE, message = FALSE, fig.width=6, fig.height=3.5}
+datos <- read.table("data/db.txt", header = TRUE, sep = ";")
+
+tmp <- rep("ACD", length(datos$X3))
+tmp[datos$X3 %in% c("B","E")] <- "BE"
+
+datos$X3bis <- as.factor(tmp)
+modelo <- glm(Y ~ X1 + X2 + X3bis, family = binomial, data = datos)
+
+S <- predict(modelo, type = "response")
+
+roc.curve=function(s, real, predicho, print = FALSE){
+ Ps <- (predicho > s)*1
+ 
+ FP <- sum((Ps == 1)*(real == 0))/ sum(real == 0)
+ # FP: de todos los noes (reales), a cuántos les asigno Sí
+ 
+ TP <- sum((Ps == 1)*(real == 1))/ sum(real == 1)
+ # TP: de todos los síes (reales), a cuántos les digo que sí
+ 
+  if (print == TRUE){
+      print(table(Observed = real, Predicted = Ps))
+  }
+  vect = c(FP,TP)
+  names(vect) = c("FPR","TPR")
+  return(vect)
+}
+
+res <- sapply(seq(0,1,by = .01), roc.curve, datos$Y, S)
+
+plot(res[1,], res[2,], col= "grey", lwd = 2, type = "l",
+     xlab = "FPR", ylab = "TPR")
+```
+
+
+# Árboles, bosques y k-vecinos
+
+## Árboles
+
+```{r, echo = FALSE, message = FALSE, fig.width=6, fig.height=3.5}
+library(party)
+aceites <- read.table("data/Olive.txt", header = T, sep = "\t")
+dat.region <- aceites
+dat.region$Test.Training <- NULL
+dat.region$Area <- NULL
+
+arbol.region <- ctree(Region ~ ., data = dat.region)
+plot(arbol.region)
+```
+
+
+## Árboles: ventajas y desventajas
+
+- Ventajas:
+    - Valen tanto para clasificación como para regresión
+    - Máxima interpretabilidad (de hecho, son casi estadística descriptiva)
+    - Sencillos de usar
+    - Casi sin teoría detrás
+- Desventajas:
+    - Baja eficacia
+    - Demasiado simples
+    - Problemas con predictores categóricos de muchos niveles
+
+
+## Bosques aleatorios
+
+- Son colecciones de árboles sobre los mismos datos
+- Es una versión del _bagging_
+- El modelo funciona por consenso democrático entre los árboles:
+    - Clasificación: clase más _votada_
+    - Regresión: promedio de predicciones de los árboles
+
+
+## Bosques: ventajas y desventajas
+
+- Ventajas:
+    - Sencillos de usar
+    - Casi sin teoría detrás
+    - Gran poder predictivo (de lo mejor)
+- Desventajas:
+    - Nula interpretabilidad
+    - Problemas con _big data_ (aunque depende de la implementación)
+    - Problemas con las predictores categóricos de muchos niveles
+    
+    
+## K-vecinos
+
+- Basados en distancias entre puntos (con los problemas que tienen las distancias)
+- Para predecir en $x$, se buscan los $k$ puntos más próximos y la predicción es el consenso de dichos vecinos
+- Son parecidos a los árboles, solo que, en lugar de que el modelo _predefina_ regiones, cada punto define la suya
+    
+
+## K-vecinos: ventajas y desventajas
+
+- Ventajas:
+    - Conceptualmente simples
+    - Modelos muy locales (válidos para datos muy complejos)
+    - En un porcentaje sustancial de problemas, el mejor algoritmo
+- Inconvenientes:
+    - El modelo contiene todos los datos
+    - Nula interpretabilidad
+    - Problemas para definir las distancias
+    - Generalmente, hay que implementarlo _a mano_
+    
+
+
+
+# Mecanismos para comparar modelos
+
+## Sobreajuste
+
+- Los datos tienen señal y ruido
+- Un modelo _bueno_ captura la señal e ignora el ruido
+- Un modelo demasiado complicado _aprende_ el ruido y no _generaliza_ bien
+- Un modelo demasiado complicado: 
+    - k-vecinos con `k = 1`
+    - Un árbol cuyos nodos finales tienen 1 elemento
+    
+## Un modelo sobreajustado
+
+```{r, echo = FALSE, message = FALSE, fig.width=6, fig.height=3.5}
+dat <- cars[order(cars$speed),]
+plot(dat$speed, dat$dist, main = "Modelo sobreajustado", xlab = "speed", ylab = "dist")
+lines(dat$speed, dat$dist, col = "red")
+```
+
+## Un modelo demasiado simple
+
+```{r, echo = FALSE, message = FALSE, fig.width=6, fig.height=3.5}
+plot(dat$speed, dat$dist, main = "Modelo demasiado simple", xlab = "speed", ylab = "dist")
+abline(h = mean(dat$dist), col = "red")
+```
+
+## Pero...
+
+```{r, echo = FALSE, message = FALSE, fig.width=6, fig.height=3.5}
+plot(dat$speed, dat$dist, main = "Dos modelos", xlab = "speed", ylab = "dist")
+abline(lm(dist ~ speed, data = dat), col = "red")
+a <- coefficients(lm(dist ~ speed + I(speed^2), data = dat))
+curve(a[1] + a[2] * x + a[3] * x * x, col = "red", add = TRUE)
+```
+
+## Entrenamiento y validación
+
+- No nos interesa el comportamiento del modelo en los datos de entrenamiento
+- Nos interesa ver qué tal se comporta sobre un conjunto de datos nuevo (no usado en entrenamiento)
+- Para comparar dos modelos se hace lo siguiente:
+    - Se entrenan sobre un subcojunto de los datos (entrenamiento)
+    - Se compara su función de pérdida en el complementario (validación)
+
+
+## Jacknife
+
+- Se usa un conjunto de entrenamiento de tamaño `n-1` y uno de validación de tamaño 1
+- Pero se usan n conjuntos de entrenamiento distintos
+- Es decir: se predice cada observación usando el modelo construido con el resto
+- Al final se tiene la predicción en cada observación
+- Ventajas: 
+    - No importa el tamaño del conjunto de entrenamiento y validación
+    - Se obtienen predicciones en cada observación
+- Desventajas:
+    - Hay que ajustar el modelo n veces
+    - Cada uno de los modelos son demasaido similares entre sí
+    
+    
+## Validación cruzada (cv)
+
+- Es como el _jackknife_, pero:
+    - En lugar de usar solo una observación para validación...
+    - ... se usa, p.e., el 10%
+- Es superior al _jacknife_ por varios motivos:
+    - Es más eficiente (menos iteraciones de ajuste)
+    - Los modelos creados son menos iguales entre sí

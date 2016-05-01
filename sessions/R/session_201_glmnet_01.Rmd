@@ -1,0 +1,394 @@
+---
+title: "Regularización de la regresión con glmnet"
+author: "Olivier Nuñez"
+date: "1 de abril de 2016"
+output: html_document
+---
+
+
+
+### Preámbulo
+
+#### Cuando se utiliza la regularización:
+
+* Problema de predicción con una alto número de predictores (overfitting)
+* Mucho ruido en la base de datos (muchos predictores no están relacionados con la respuesta)
+* Alta correlación entre los predictores (multicolinealidad)  
+
+
+#### Porqué Regularizar?
+
+* La estimación de los coeficientes puede ser muy inestable (altas varianzas)
+* Permite una selección _continua_ de variables
+* Subsana los problemas que conlleva la multicolinealidad
+
+
+
+#### En qué consiste la regularización?
+
+
+__Regresión lineal__:
+
+Para $i=1,2,\dots,N$, 
+
+$$ y_i = \beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \dots + \beta_K x_{iK} +\varepsilon_i$$
+
+donde $\varepsilon_i \sim N(0,\sigma^2)$.
+
+los coeficientes $\beta_k$ se estiman sin restricción.
+
+__Regresión con regulariazión__:
+
+los coeficientes $\beta_k$ están restringido. 
+
+1. _Ridge regression_: $$\sum_{k=1}^K \beta_k^2 \leq t$$
+2. _Lasso regression_: $$\sum_{k=1}^K \left| \beta_k\right| \leq t$$
+3. _Elastic-net_: mixtura de Ridge y Lasso $$\sum_{k=1}^K \left[ \alpha\left| \beta_k\right| + (1-\alpha) \beta_k^2 \right] \leq t$$
+
+#### Interpretación de la regularización:
+* __Shrinkage__:
+    + Ridge: asemeja los coeficientes de los predictores mutuamente correlacionados
+    + Lasso: selecciona uno de estos predictores y descarta los demás.
+* __PCA__: Penaliza las direcciones (combinaciones) de los predictores poco informativas.
+* __Bayesian__: 
+    + Ridge ~ los coeficientes tienen una distribución (_a priori_) gaussiana.
+    + Lasso ~ los coeficientes tienen una distribución (_a priori_) de Laplace.
+  
+### Quick tour por glmnet
+
+```{r,message=FALSE,warning=FALSE}
+rm(list=ls()) #limpiamos la memoría
+require(glmnet)
+
+require(data.table)
+require(ggplot2)
+```
+
+Un ejemplo de trenes sencillo para empezar
+
+```{r}
+######### Retrasos de trenes ###########
+set.seed(4321) #fija la semilla para que el ejemplo sea reproducible.
+n=1000 #tamaño de la muestra
+DT=data.table(distancia=rnorm(n,500,100))
+DT[,estaciones:= rpois(n,10)]
+DT[,precio:=rnorm(n,50,10)]
+DT=round(DT,2) 
+DT
+```
+
+Ahora generamos los retrasos
+```{r}
+DT[,retrasos:= 1 + distancia/100 + estaciones/5 + rnorm(n,0,1)]
+p <- ggplot(DT,aes(y=retrasos,x=distancia,color=cut(estaciones,quantile(estaciones),right=TRUE))) +
+  geom_smooth(se=FALSE) + scale_color_discrete("Número de estaciones")
+p
+p + geom_point()
+```
+?geom_point
+
+Resultado de una estimación lineal
+```{r}
+ols <- lm(retrasos ~ . ,DT)
+summary(ols)
+```
+La estimación es bastante buena!
+
+Pero, en realidad el precio está muy correlacionado con los demás predictores
+```{r,message=FALSE}
+require(GGally)
+DT[,precio:=distancia/10 - estaciones + rnorm(n,0,.1)] #precio y distancia están correlados
+ggpairs(DT)
+```
+
+Ajustamos de nuevo una regresión lineal:
+```{r}
+ols <- lm(retrasos ~ . ,DT)
+summary(ols)                         # Es mucho peor, voy a regularizar !!!!!!!!!
+```
+
+Para solucionar este problema utilizamos una regresión de Lasso via glmnet:
+```{r}
+y=DT$retrasos
+x=subset(DT,select=-retrasos)
+x
+lasso=glmnet(as.matrix(x),y)         # y tiene que ser un vector, x debe ser una matriz
+plot(lasso,label=TRUE)
+```
+
+Para seleccionar el coeficiente de la penalización recurrimos a cross-validation:
+```{r}
+cvlasso = cv.glmnet(as.matrix(x), y)
+plot(cvlasso)
+coef(cvlasso, s = "lambda.min")
+```
+
+Qué haría la regresión de Ridge?
+```{r}
+cvridge = cv.glmnet(as.matrix(x), y,alpha=0)
+plot(cvridge)
+coef(cvridge, s = "lambda.min")
+```
+
+Y con la elastic-net
+```{r}
+cvnEN = cv.glmnet(as.matrix(x), y,alpha=.5)
+plot(cvnEN)
+coef(cvnEN, s = "lambda.min")
+```
+
+La multicolinealidad afecta la estimación de los coeficientes de la regresión, pero no tiene poque afectar la predición.
+
+### Overfitting
+
+Para ilustar este problema, seguimos con el ejemplo de los trenes.
+```{r}
+n=100
+DT=data.table(distancia=rnorm(n,0,3)) #distancias estandarizadas
+DT[,media:= 2 + exp(distancia)/(1+exp(distancia))]
+DT[,retrasos:= media + rnorm(n,0,.5)]
+p<-ggplot(DT,aes(y=media,x=distancia)) + geom_line(size=1,color="blue4") + 
+  ylim(range(DT$retraso))+xlab("distancia estandarizada") 
+p
+```
+
+Para investigar la capacidad predictiva del modelo, partimos la base de datos en un conjunto de adiestrameinto y un conjunto de test:
+```{r,warning=FALSE}
+DT[,muestra:=sample(c("train","test"),n,prob=c(2/3,1/3),replace=TRUE)]
+p<- p + geom_point(aes(y=retrasos,color=muestra),DT) 
+p
+```
+
+
+Queremos ajustar una regresión polynomial
+```{r}
+poly=outer(DT$distancia,2:10,function(x,y) x^y)
+DT=cbind(DT,poly=poly)
+```
+
+
+```{r}
+ols <- lm(retrasos ~ . ,subset(DT,muestra=="train",select=-c(media,muestra)))
+summary(ols)
+
+DT[muestra=="train",fit.ols:=ols$fit] #overfitting !!
+p<- p + geom_line(aes(x=distancia,y=fit.ols),data=subset(DT,muestra=="train"),col="orange3",size=1)
+p
+pred=predict(ols,DT[muestra=="test",])
+mse=mean((pred-DT[muestra=="test",retrasos])^2)
+sprintf("MSE_ols = %.3f",mse)  
+```
+
+Para regularizar esta regresión, utilizamos de nuevo glmnet 
+```{r}
+DT[,fit:=NULL] #se borra el fit del ols
+x=subset(DT,muestra=="train",select=-c(retrasos,muestra,media,fit.ols))
+y=subset(DT,muestra=="train")$retrasos
+lasso = cv.glmnet(as.matrix(x), y)
+plot(lasso)
+coef(lasso, s = "lambda.min")
+```
+
+Y predecimos
+```{r,warning=FALSE}
+fit.glmnet=predict(lasso,newx=as.matrix(x),s = "lambda.min")
+x.new=subset(DT,muestra=="test",select=-c(retrasos,muestra,media,fit.ols))
+pred=predict(lasso,newx=as.matrix(x.new),s = "lambda.min")
+mse=mean((pred-DT[muestra=="test",retrasos])^2)
+sprintf("MSE_glmnet = %.3f",mse)  
+DT[muestra=="train",fit.glmnet:=fit.glmnet]
+p + geom_line(aes(x=distancia,y=fit.glmnet),data=subset(DT,muestra=="train"),col="green3",size=1)
+```
+
+# Ejercicio: hacer con ridge y elastic-net
+
+```{r,warning=FALSE}
+DT[,fit:=NULL] #se borra el fit del ols
+x=subset(DT,muestra=="train",select=-c(retrasos,muestra,media,fit.ols))
+y=subset(DT,muestra=="train")$retrasos
+ridge = cv.glmnet(as.matrix(x), y, alpha=0)
+plot(ridge)
+coef(ridge, s = "lambda.min")
+```
+
+Y predecimos
+```{r,warning=FALSE}
+fit.glmnet=predict(ridge,newx=as.matrix(x),s = "lambda.min")
+x.new=subset(DT,muestra=="test",select=-c(retrasos,muestra,media,fit.ols))
+pred=predict(ridge,newx=as.matrix(x.new),s = "lambda.min")
+mse=mean((pred-DT[muestra=="test",retrasos])^2)
+sprintf("MSE_glmnet = %.3f",mse)  
+DT[muestra=="train",fit.glmnet:=fit.glmnet]
+p + geom_line(aes(x=distancia,y=fit.glmnet),data=subset(DT,muestra=="train"),col="green3",size=1)
+```
+
+
+### Ejercios: Tres contextos de Big Data
+
+Determinar la regularización correcta en los tres contextos siguientes:
+
+
+#### Contexto 1:
+
+_Verdadero_ modelo: ${y}={X\beta} + {\epsilon}$
+
+donde
+
+- ${\beta}=(\underbrace{1,...,1}_{15}, \underbrace{0,...,0}_{4085})$
+- $p=5000 > n=1000$
+- Predictores no correlacionados: 
+    $${X}_i \overset{\text{iid}}{\sim} N({0},  I)$$
+- ${\epsilon} \overset{\text{iid}}{\sim} N({0}, I)$
+
+```{r}
+set.seed(1234)  
+n <- 1000  # Numero de observación
+p <- 5000  # Numero de predictores
+p0 <- 15  # Numero de predictores correlacionados con la respuesta
+DT1 <- data.table(matrix(rnorm(n*p), nrow=n, ncol=p))
+setnames(DT1,names(DT1),sub("V","X",names(DT1)))
+DT1[,y:= rowSums(.SD) + rnorm(n),.SDcols=paste0("X",1:p0)]
+
+# partición de la muestra en train (2/3) y test (1/3) 
+DT1[,muestra:=sample(c("train","test"),n,prob=c(2/3,1/3),replace=TRUE)]
+DT1[,.(y,X1,X2,X2000,muestra)]
+```
+
+#### Contexto 2:
+
+_Verdadero_ modelo: ${y}={X\beta} + {\epsilon}$
+
+donde
+
+- ${\beta}=(\underbrace{1,...,1}_{1500}, \underbrace{0,...,0}_{3500})$
+- $p=5000 , n=1000$
+- Predictores no correlacionados: 
+    $${X}_i \overset{\text{iid}}{\sim} N({0},  I)$$
+- ${\epsilon} \overset{\text{iid}}{\sim} N({0}, I)$
+
+```{r}
+set.seed(1234)  
+n <- 1000  # Numero de observación
+p <- 5000  # Numero de predictores
+p0 <- 1500  # Numero de predictores correlacionados con la respuesta
+DT2 <- data.table(matrix(rnorm(n*p), nrow=n, ncol=p))
+setnames(DT2,names(DT2),sub("V","X",names(DT2)))
+DT2[,y:= rowSums(.SD) + rnorm(n),.SDcols=paste0("X",1:p0)]
+
+# partición de la muestra en train (2/3) y test (1/3) 
+DT2[,muestra:=sample(c("train","test"),n,prob=c(2/3,1/3),replace=TRUE)]
+DT2[,.(y,X1,X2,X2000,muestra)]
+```
+
+#### Contexto 3:
+
+_Verdadero_ modelo: ${y}={X\beta} + {\epsilon}$
+
+donde
+
+- ${\beta}=(10,10,5,5,\underbrace{1,...,1}_{10},\underbrace{0,...,0}_{36})^T$
+- $p=50$
+- $n=100$
+- Predictores correlacionados: $$Cov({X})_{ij} = (0.8)^{|i-j|}$$
+
+```{r,message=FALSE}
+set.seed(1234)  
+require(MASS)
+n <- 100  # Numero de observación
+p <- 50  # Numero de predictores
+Covarianza <- outer(1:p, 1:p, function(x,y) {.8^abs(x-y)})
+DT3 <- data.table(mvrnorm(n, rep(0,p), Covarianza))
+setnames(DT3,names(DT3),sub("V","X",names(DT3)))
+DT3[,y:=rowSums(.SD),,.SDcols=paste0("X",5:14)]
+DT3[,y:= 10 * (X1+X2) + 5*(X3+X4)+rnorm(n)]
+
+# partición de la muestra en train (2/3) y test (1/3) 
+DT3[,muestra:=sample(c("train","test"),n,prob=c(2/3,1/3),replace=TRUE)]
+DT3[1:10,.(y,X1,X2,muestra)]
+
+# Ejercicio: Intentar regresiones y luego regularizarlas en los tres contextos !!!!!!!!!!! y calcular el error cuadr?tico medio para ver cual es el mejor
+
+# Quitando el contexto 3 y no mucho, no funciona la regresi?n
+ols <- lm(y ~ . ,subset(DT1,muestra=="train",select=-c(muestra)))
+summary(ols)
+ols <- lm(y ~ . ,subset(DT2,muestra=="train",select=-c(muestra)))
+summary(ols)
+ols <- lm(y ~ . ,subset(DT3,muestra=="train",select=-c(muestra)))
+summary(ols)
+
+x=subset(DT1,muestra=="train",select=-c(y,muestra))
+y=subset(DT1,muestra=="train")$y
+lasso = cv.glmnet(as.matrix(x), y)
+plot(lasso)
+coef(lasso, s = "lambda.min")  # mirar en google gimnet Vignete ayuda del paquete para ver otro valor llamado lambda.1se
+
+Reg <- function(DT,alpha){
+  x=subset(DT,muestra=="train",select=-c(y,muestra,y))
+  y=subset(DT,muestra=="train")$y
+  fit = cv.glmnet(as.matrix(x), y,alpha=alpha)
+  plot(fit)
+ 
+   # MIRAR FOTO EN MOTO G para completar funci?n
+  
+  x.new=subset(DT,muestra=="test",select=-c(muestra,y))
+  pred=predict(fit,newx=as.matrix(x.new),s = "lambda.min")
+  mse=mean((pred-DT[muestra=="test",y])^2)
+  sprintf("MSE = %.3f",mse)  
+  } 
+  # Luego lanzar funci?n con diferentes alphas
+
+Reg(DT1,alpha=0.0)
+
+```
+
+
+
+### Clasificación
+
+No hay novedad, salvo que ahora la respuesta es dicotomica.
+
+Cargamos un ejuemplo:
+```{r}
+con=url("https://web.stanford.edu/~hastie/glmnet/glmnetData/BNExample.RData")
+load(con)
+```
+
+Ajuste con glmnet
+```{r}
+cvfit = cv.glmnet(x, y, family = "binomial", type.measure = "class")
+plot(cvfit)
+```
+
+Predicción
+```{r}
+predict(cvfit, newx = x[1:10,], s = "lambda.min", type = "class")
+```
+
+### Ejercicios: Análisis de datos reales
+
+Repositorio de la UCI: 
+
+[https://archive.ics.uci.edu/ml/datasets.html](https://archive.ics.uci.edu/ml/datasets.html)
+
+Ejemplo "Calidad del vino"
+```{r}
+vinos=fread("https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv")
+dim(datos)
+x=as.matrix(subset(vinos,select=-quality))
+y=vinos$quality
+fit = glmnet(x, y, family = "multinomial", type.multinomial = "grouped")
+plot(fit,label=TRUE)
+
+table(vinos$quality)
+```
+
+
+Otros conjuntos de datos:
+```{r}
+#   - https://archive.ics.uci.edu/ml/datasets/Bike+Sharing+Dataset (regresión)
+#   - https://archive.ics.uci.edu/ml/datasets/Bank+Marketing (clasificación)
+#   - https://archive.ics.uci.edu/ml/datasets/default+of+credit+card+clients (clasificación)
+```
+
+
+
