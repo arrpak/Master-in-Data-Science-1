@@ -1,0 +1,108 @@
+
+# Kaggle:  Satisfacción de clientes del Banco Santander
+### Proyecto final del máster en Data Science de [KSchool](http://www.kschool.com/)
+#### Notebook por [Javier Almendro](https://www.linkedin.com/in/javieralmendro)
+
+## Introducción
+
+Desde los equipos de soporte hasta la línea de dirección, para todos los estamentos del Banco Santander la satisfacción del cliente es una medida clave del éxito. Por lo tanto el Banco Santander es consciente que un cliente insatisfecho, no sólo no seguirá siéndolo, sino que además abandonará sin avisar.
+
+
+![](./santander_custsat_red.jpg)  
+
+
+Por ello, con fecha del 2 de Marzo de 2016, publica en la plataforma [Kaggle](http://www.kaggle.com) una competición con título [**"¿Qué clientes son clientes felices?**](https://www.kaggle.com/c/santander-customer-satisfaction). Mediante dicha competición, el banco solicita la ayuda a todos los Kaggles para conseguir identificar lo antes posible clientes insatisfechos, y así poder anticipar las acciones necesarias para mejorar su satisfacción antes que sea demasiado tarde.
+
+## Librerías requeridas
+
+Este notebook utiliza varias librerías de R. En concreto, las librerías utilizadas son:
+
+```{r}
+
+library(class)
+
+```
+
+
+## Lectura de los datos
+
+El banco aporta un conjunto de datos sobre una gran cantidad de variables con el objetivo de predecir si un cliente está satisfecho o insatisfecho con su experiencia con la entidad. 
+
+1. En primer lugar, se aporta un fichero [training.csv](https://www.kaggle.com/c/santander-customer-satisfaction/download/train.csv.zip) que consta de cientos de variables **numéricas y anónimas**, incluyendo una columna llamada `TARGET` que contiene un 1 para clientes insatisfechos y un 0 para los satifechos.
+2. Un segundo fichero [test.csv](https://www.kaggle.com/c/santander-customer-satisfaction/download/test.csv.zip), en el que predecir para cada cliente si está satisfecho o no.
+
+### Lectura de los ficheros
+
+En primer lugar, se procede a leer los dos conjuntos de datos _training.csv y test.csv_. A continuación, se elimina la primera columna `ID` en ambos DataFrames y se segrega la última columna `TARGET` del conjunto de datos de training en un DataFrame adicional.
+
+```{r}
+
+df_test <- read.csv('../data/test.csv', header = TRUE, sep = ',', na.strings = c("","NA"))
+df_test$ID <- NULL
+
+df_train <- read.csv('../data/train.csv', header = TRUE, sep = ',', na.strings = c("","NA"))
+df_target <- df_train$TARGET
+df_train$ID <- NULL
+df_train$TARGET <- NULL
+
+```
+
+### Análisis inicial de los datos
+
+El Banco Santander no aporta ningún tipo de información sobre el significado concreto de cada uno de los predictores, e incluso en la breve descripción aportada, se recalca el carácter anómimo de dichas variables. En principio, no se prevé que este anonimato pueda impactar en el cálculo de predicciones sobre si un cliente está satisfecho o no. No obstante, de cara a una interpretación posterior, podrían ser de utilidad las opiniones expresadas por diferentes usuarios en el [foro de Kaggle](https://www.kaggle.com/c/santander-customer-satisfaction/forums).
+
+```{r}
+
+cat("test: número de filas: ", dim(df_test)[1], ", número de columnas: ", dim(df_test)[2])
+cat("train: número de filas: ", dim(df_train)[1], ", número de columnas: ", dim(df_train)[2])
+cat("TARGET: número de 0's: ", length(df_target)-sum(df_target), "número de 1's: ", sum(df_target))
+
+```
+
+## Reducción de la dimensionalidad de los datos
+
+La reciente explosión en tamaño de los datos disponibles ha provocado el desarrollo, no solo de plataformas Big Data, sino también de algortimos de análisis paralelizado de dichos datos. En este caso los datos no han crecido tanto en número de registros como en la cantidad de atributos disponibles **(369 columnas)**. Sin embargo, no siempre más es mejor, ya que demasiados predictores pueden conducir a un pobre rendimiento en el análisis posterior, tanto en la velocidad de ejecución como el acierto de las prediciones.
+
+Por lo tanto, un primer hito del proceso consiste en reducir el número de columnas, y al mismo tiempo, perder la menor cantidad de información posible. A continuación, se ejecutan varios de los procedimientos más usados en la actualidad para reducir la dimensionalidad de los datos:
+
+* Low Variance Filter
+* High Correlation Filter
+* Principal Component Analysis (PCA)
+
+### Low Variance Filter
+
+Las columnas que contienen pocos cambios en sus registros apenas aportan información al conjunto de datos, por lo que aquellas columnas con una varianza menor a un umbral determinado son eliminadas. En este caso se fija el umbral en cero, por lo que únicamente son borradas las columnas con todos sus registros iguales.
+
+```{r}
+
+var_threshold <- 0
+
+names_prev <- names(df_train)
+df_train <- df_train[,apply(df_train,2,var) != var_threshold]
+
+names_prev[!(names_prev %in% names(df_train))]
+cat("Número de filas: ", dim(df_train)[1], " Número de columnas: ", dim(df_train)[2])
+
+```
+
+### High Correlation Filter
+
+Dos columnas de datos diferentes con tendencias similares entre sí, o lo que es lo mismo, con valores muy correlacionados aportan una cantidad de información muy similar al conjunto de datos, por lo que una de ellas puede ser eliminada. En concreto, dos columnas con el coeficiente de correlación superior a un umbral son reducidas a una sóla.
+
+En este caso, se fija el umbral en 0.999, por lo se borran todas aquellas columnas que estén totalmente correlacionadas con alguna otra.
+
+```{r}
+
+cor_threshold <- 0.999
+
+names_prev <- names(df_train)
+df_cor <- abs(cor(df_train))
+diag(df_cor) <- 0
+df_cor[lower.tri(df_cor)] <- 0
+df_train <- df_train[,!(apply(df_cor,2,max) >= cor_threshold)]
+
+names_prev[!(names_prev %in% names(df_train))]
+cat("Número de filas: ", dim(df_train)[1], " Número de columnas: ", dim(df_train)[2])
+
+```
+
