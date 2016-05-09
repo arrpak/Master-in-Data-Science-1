@@ -67,7 +67,6 @@ Por lo tanto, un primer hito del proceso consiste en reducir el número de column
 
 * Low Variance Filter
 * High Correlation Filter
-* Principal Component Analysis (PCA)
 
 ### Low Variance Filter
 
@@ -103,6 +102,9 @@ df_train <- df_train[,!(apply(df_cor,2,max) >= cor_threshold)]
 
 names_prev[!(names_prev %in% names(df_train))]
 cat("Número de filas: ", dim(df_train)[1], " Número de columnas: ", dim(df_train)[2])
+
+df_train$TARGET <- df_target
+write.csv(df_train, '../data/train_reduced.csv', row.names = FALSE)
 
 ```
 

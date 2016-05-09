@@ -1,0 +1,157 @@
+---
+title: Lenguaje Natural - npl
+author: Carlos Gil Bellosta
+date: 2016-05-07
+output: 
+  revealjs::revealjs_presentation:
+    theme: sky
+    highlight: pygments
+---
+
+# Objetivos
+
+## Matrices de frecuenias (docs x términos)
+
+* Queremos fabricar matrices cuyas
+    * *filas* sean documentos (tuits, novelas, campos de libre respuesta de formularios, etc.)
+    * *columnas* sean términos (palabras)
+    * *entradas* sean el número de veces que ocurren
+* Estas matrices permiten aplicar modelos diversos: 
+    * clasificación
+    * clústering en sentido amplio: incluye detección de temas (o _topics_)
+    * representación gráfica (nubes de palabras)
+    * etc.
+    
+## Trigramas y otros
+
+* Los modelos basados en matrices se llaman de _bags of words_.
+* Se pierde la ordenación 
+* Los trigramas conservan algo de la estructura sintáctica
+* Más allá de los trigramas está el análisis estructural (sintáctico) más profundo
+
+
+# Matrices de frecuencias
+
+## Construcción de matrices de frecuencias
+
+- Tokenización
+- Eliminación de palabras comunes (y TF-IDF)
+- Otras transformaciones (a minúsculas, etc.)
+- Lematización
+- Sinónimos
+
+
+## Tokenización
+
+* Consiste en encontrar las palabras individuales
+* Típicamente, cortado por espacios,... ¿cuáles son _todos_ los separadores?
+* Pero no es _tan_ simple:
+    * Estar _en los cerros de Úbeda_.
+    * Carlos J. Gil Bellosta
+    * Tribunal de Cuentas
+* Hacerlo _bien_ exige un buen _ner_ (_named entity recognition_).
+* ¿Usamos reglas? ¿Nos apoyamos en diccionarios?
+
+
+## Palabras comunes
+
+* Conocidas también como _stop words_.
+* Son las palabras demasiado comunes: y, a, es, tú,...
+* Típicamente no aportan nada porque aparecen frecuentemente en todos los documentos.
+* Relacionadas con el TF-IDF
+* [](./Rplot.jpeg)
+
+
+## TF-IDF
+
+* TF: _term frecuency_; ¡interesan términos frecuentes, i.e., no anecdóticos!
+* IDF: _inverse document frequency_, i.e., que aparezcan en pocos documentos
+* El TF-IDF es una medida de la utilidad de un término para distinguir documentos
+* Los detalles, [en la Wikipedia](https://en.wikipedia.org/wiki/Tf%E2%80%93idf)
+* Importante:
+    * El TF-IDF es una familia de indicadores
+    * Las matemáticas son una excusa para dar más o menos peso al TF sobre el IDF
+
+
+## Lematización (o stemming)
+
+* ¿Cuál es la raíz de un término?
+* ¡Un mismo verbo puede tener cientos de formas distintas!
+* El español es un lenguaje muy _flexible_ morfológicamente
+* Métodos de lematización:
+    * Basados en reglas (p.e., [_snowball_](http://snowball.tartarus.org/algorithms/spanish/stemmer.html))
+    * Basados en diccionarios
+    * Basados en máquinas de estados finitos
+* ¿Y los problemas de desambigüación?    
+
+
+## Sinónimos
+
+* La matriz docs x términos puede ser demasiado rala (por tener demasiadas columnas)
+* Los sinónimos se pueden utilizar para reducir la dimensionalidad
+* Obviamente, tienen que estar basados en diccionarios
+    
+
+## ¡Ya tenemos (teóricamente) la matriz!
+
+¡Enhorabuena!
+
+Veremos luego qué podemos hacer con ella.
+
+
+# Idiomas y sus características
+
+## No todos los idiomas son iguales
+
+* El inglés es inflexible y se apoya en la sintaxis
+* El español es flexible y se apoya en la morfología
+* Mucho de lo existente se ha creado con el inglés como idioma objetivo
+* Trasladarlo al español es bastante problemático
+* (Y dejamos de lado otros idiomas como el alemán, húngaro, etc.)
+
+
+# Freeling
+
+## Qué es Freeling
+
+* Es un programa creado por la UPC y la UPF
+* Incluye muchas herramientas para el análisis del español (y algunos otros idiomas)
+* Diríase que es la mejor para el español
+
+## Cómo es Freeling
+
+* Es _software_ libre
+* Incluye código (C++) y diccionarios
+* Si lo compilas, tienes:
+    * Diccionarios
+    * Una _librería_
+    * Un programa, `analyze` con el que puedes realizar consultas
+* Se puede probar en línea [aquí](http://nlp.lsi.upc.edu/freeling/demo/demo.php).
+
+## Un proyecto personal y colaborativo
+
+* Facilitar el acceso a Freeling a, en particular, los usuarios de R
+* Dockerizar Freeling 
+* Colgarlo mediante una API pública
+* Permitir que los usuarios que quieran hacer un uso intensivo puedan traer la API a sus sistemas locales
+    
+    
+# Modelos sobre información textual
+
+## Clasificación
+
+* Si tenemos una matriz de términos y una colección de ellos están clasificados, podemos hacer clasificación
+* Se pueden usar SVM, GBM, etc. para clasificaciones binarias
+* O GBM y otros para clasificaciones multietiqueta
+* En clasificaciones binarias, naive Bayes es el modelo de referencia (_baseline_) habitual
+* ¡Esa parte ya la conocemos!
+
+
+## Identificación de temas
+
+* El método más habitual es LDA (_latent Dirichlet allocation_)
+* Está basado en una aproximación bayesiana (y un modelo generativo)
+* Los temas generan palabras y, a partir de las palabras, queremos redescubrir los temas
+* Esos temas son/permanecen _latentes_
+
+
