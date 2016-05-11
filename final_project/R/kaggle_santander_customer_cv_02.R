@@ -43,11 +43,12 @@ for (n in 1:nrow(xgb_param)){
 result_cv <- cbind(xgb_param,result_cv)
 
 write.csv(result_cv, '../data/result_cv360.csv')
+result_cv <- read.csv("../data/result_cv360.csv")
 
 which_round_max_auc <- which.max(t(apply(result_cv[,4:363],2,max)))
 which_param_max_auc <- which.max(result_cv[,which_round_max_auc])
 
-result_cv[which_param_max_auc,c(1,2,3,3+which_round_max_auc)]
+result_cv[which_param_max_auc,c(2,3,4,3+which_round_max_auc)]
 
 nrounds <- 720
 set.seed(1234)
@@ -55,18 +56,18 @@ xgb_row <- xgb.cv(data = X,
                   label = y,
                   nrounds = nrounds,
                   objective = 'binary:logistic',
-                  max.depth = 5,
+                  max.depth = 6,
                   gamma = 0,
                   min_child_weight = 1,
                   missing = NA,
                   nfold = 5,
                   metrics = list('auc','logloss','error'),
-                  early.stop.round = 150,
+                  early.stop.round = 20,
                   maximize=F,
                   verbose=0,
-                  eta = 0.03,
-                  colsample_bytree = 0.5,
-                  subsample = 0.5)
+                  eta = 0.02,
+                  colsample_bytree = 0.6,
+                  subsample = 0.6)
 
 max(xgb_row$test.auc.mean)
 which.max(xgb_row$test.auc.mean)
